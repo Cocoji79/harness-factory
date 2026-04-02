@@ -11,6 +11,9 @@ export interface Project {
   interviews: InterviewData[];
   analysis?: GapAnalysis;
   harness?: HarnessDocument;
+  input_assessment?: InputAssessment;
+  harness_validation?: HarnessValidation;
+  health_reports: HealthReport[];
 }
 
 // ── Knowledge Base ──
@@ -258,6 +261,176 @@ export interface ChecklistItem {
   item: string;
   priority: "before_start" | "during" | "after";
   status: "pending" | "confirmed";
+}
+
+// ── Quality Assessment ──
+
+export interface InputAssessment {
+  overall_score: number; // 0-100
+  ready_to_analyze: boolean;
+  vision_score: VisionScore;
+  knowledge_base_score: KnowledgeBaseScore;
+  interview_score: InterviewScore;
+  cross_validation: CrossValidation;
+  blocking_issues: string[];
+  recommendations: string[];
+}
+
+export interface VisionScore {
+  score: number;
+  has_goals: boolean;
+  has_stakeholders: boolean;
+  has_ideal_process: boolean;
+  has_ai_opportunities: boolean;
+  has_constraints: boolean;
+  issues: string[];
+}
+
+export interface KnowledgeBaseScore {
+  score: number;
+  count: number;
+  has_documented_processes: boolean;
+  has_policies: boolean;
+  has_sops: boolean;
+  staleness_risk: "low" | "medium" | "high";
+  issues: string[];
+}
+
+export interface InterviewScore {
+  score: number;
+  count: number;
+  roles_covered: string[];
+  has_pain_points: boolean;
+  has_implicit_knowledge: boolean;
+  has_workarounds: boolean;
+  has_time_costs: boolean;
+  issues: string[];
+}
+
+export interface CrossValidation {
+  vision_interview_alignment: "aligned" | "partial" | "conflicting" | "unknown";
+  docs_reality_gap: "small" | "moderate" | "large" | "unknown";
+  issues: string[];
+}
+
+export interface HarnessValidation {
+  overall_score: number; // 0-100
+  is_valid: boolean;
+  control_coverage: ControlCoverageCheck;
+  failure_handling: FailureHandlingCheck;
+  human_checkpoints: HumanCheckpointCheck;
+  config_externalization: ConfigCheck;
+  implementation_feasibility: FeasibilityCheck;
+  data_architecture: DataArchCheck;
+  dependency_check: DependencyCheck;
+  issues: ValidationIssue[];
+}
+
+export interface ControlCoverageCheck {
+  total_stages: number;
+  covered_stages: number;
+  uncovered: string[];
+  passed: boolean;
+}
+
+export interface FailureHandlingCheck {
+  auto_stages: number;
+  with_failure_handling: number;
+  missing: string[];
+  passed: boolean;
+}
+
+export interface HumanCheckpointCheck {
+  has_human_checkpoint: boolean;
+  human_confirmed_count: number;
+  auto_only_risk: boolean;
+  passed: boolean;
+}
+
+export interface ConfigCheck {
+  hardcoded_values: string[];
+  externalized_count: number;
+  passed: boolean;
+}
+
+export interface FeasibilityCheck {
+  phases_with_completion_criteria: number;
+  phases_total: number;
+  phases_with_confirmation: number;
+  passed: boolean;
+}
+
+export interface DataArchCheck {
+  has_main_table: boolean;
+  has_log_table: boolean;
+  has_status_enum: boolean;
+  passed: boolean;
+}
+
+export interface DependencyCheck {
+  new_skills: string[];
+  missing_dependencies: string[];
+  passed: boolean;
+}
+
+export interface ValidationIssue {
+  severity: "critical" | "warning" | "info";
+  category: string;
+  message: string;
+  suggestion: string;
+}
+
+export interface HealthReport {
+  project_id: string;
+  report_time: string;
+  overall_health: "healthy" | "degraded" | "unhealthy";
+  overall_score: number; // 0-100
+  stage_metrics: StageMetric[];
+  anomaly_summary: AnomalySummary;
+  automation_effectiveness: AutomationEffectiveness;
+  config_stability: ConfigStability;
+  recommendations: HealthRecommendation[];
+  needs_revision: boolean;
+  revision_reasons: string[];
+}
+
+export interface StageMetric {
+  stage: string;
+  objects_entered: number;
+  objects_completed: number;
+  objects_stuck: number;
+  conversion_rate: number;
+  avg_duration_hours: number;
+  max_duration_hours: number;
+  is_bottleneck: boolean;
+}
+
+export interface AnomalySummary {
+  total_anomalies: number;
+  by_stage: Record<string, number>;
+  top_reasons: string[];
+  anomaly_rate: number;
+}
+
+export interface AutomationEffectiveness {
+  full_auto_stages: number;
+  full_auto_with_manual_override: number;
+  override_rate: number;
+  stages_needing_reclassification: string[];
+}
+
+export interface ConfigStability {
+  changes_last_7_days: number;
+  changes_last_30_days: number;
+  frequently_changed_configs: string[];
+  is_stable: boolean;
+}
+
+export interface HealthRecommendation {
+  priority: "critical" | "high" | "medium" | "low";
+  area: string;
+  finding: string;
+  suggestion: string;
 }
 
 // ── Capability Registry ──

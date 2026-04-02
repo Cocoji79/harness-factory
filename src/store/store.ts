@@ -49,6 +49,7 @@ export class Store {
       status: "gathering",
       knowledge_bases: [],
       interviews: [],
+      health_reports: [],
     };
     await this.saveProject(project);
     return project;

@@ -273,6 +273,15 @@ harness-factory/
 
 ## Changelog
 
+### 0.3.0 (2026-04-02)
+
+- Quality self-assessment: three-layer quality gates
+  - `assess_inputs` — input quality scoring before analysis (vision/KB/interview completeness, cross-validation)
+  - `validate_harness` — 7-dimension structural self-check after handbook generation (control coverage, failure handling, human checkpoints, config externalization, feasibility, data architecture, dependency closure)
+  - `health_check` — runtime health reports with revision trigger (stage conversion rates, anomaly rates, automation effectiveness, config stability)
+- Self-reflection loop: health_check can trigger needs_revision → back to analyze_gaps
+- 15 MCP Tools total
+
 ### 0.2.0 (2026-04-02)
 
 - 12 MCP Tools + 2 Resources, full CRUD

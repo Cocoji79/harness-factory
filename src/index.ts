@@ -33,6 +33,18 @@ import {
   handleGenerateHarness,
 } from "./tools/generate-harness.js";
 import {
+  ASSESS_INPUTS_SCHEMA,
+  handleAssessInputs,
+} from "./tools/assess-inputs.js";
+import {
+  VALIDATE_HARNESS_SCHEMA,
+  handleValidateHarness,
+} from "./tools/validate-harness.js";
+import {
+  HEALTH_CHECK_SCHEMA,
+  handleHealthCheck,
+} from "./tools/health-check.js";
+import {
   LIST_CAPABILITIES_SCHEMA,
   REGISTER_CAPABILITY_SCHEMA,
   REMOVE_CAPABILITY_SCHEMA,
@@ -59,7 +71,7 @@ const store = new Store(DATA_DIR);
 const server = new Server(
   {
     name: "harness-factory",
-    version: "0.2.0",
+    version: "0.3.0",
   },
   {
     capabilities: {
@@ -76,8 +88,11 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     INGEST_VISION_SCHEMA,
     INGEST_KNOWLEDGE_BASE_SCHEMA,
     INGEST_INTERVIEW_SCHEMA,
+    ASSESS_INPUTS_SCHEMA,
     ANALYZE_GAPS_SCHEMA,
     GENERATE_HARNESS_SCHEMA,
+    VALIDATE_HARNESS_SCHEMA,
+    HEALTH_CHECK_SCHEMA,
     LIST_CAPABILITIES_SCHEMA,
     REGISTER_CAPABILITY_SCHEMA,
     REMOVE_CAPABILITY_SCHEMA,
@@ -113,6 +128,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           args as Parameters<typeof handleIngestInterview>[1],
         );
         break;
+      case "assess_inputs":
+        result = await handleAssessInputs(
+          store,
+          args as Parameters<typeof handleAssessInputs>[1],
+        );
+        break;
       case "analyze_gaps":
         result = await handleAnalyzeGaps(
           store,
@@ -123,6 +144,18 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         result = await handleGenerateHarness(
           store,
           args as Parameters<typeof handleGenerateHarness>[1],
+        );
+        break;
+      case "validate_harness":
+        result = await handleValidateHarness(
+          store,
+          args as Parameters<typeof handleValidateHarness>[1],
+        );
+        break;
+      case "health_check":
+        result = await handleHealthCheck(
+          store,
+          args as Parameters<typeof handleHealthCheck>[1],
         );
         break;
       case "list_capabilities":
@@ -281,7 +314,15 @@ Agent 的角色是 **第四个分析者**——拿到三层输入后，做四维
 → 结构化的现实视角（流程、痛点、隐性知识、变通做法）
 \`\`\`
 
-### Step 4: 四维差距分析
+### Step 4: 输入质量门禁 🚦
+\`\`\`
+调用 assess_inputs
+→ 评估三层输入的完整度和质量
+→ 如果评分 ≥70 且无阻塞问题 → 继续
+→ 如果评分 <70 或有阻塞问题 → 回到 Step 1-3 补充
+\`\`\`
+
+### Step 5: 四维差距分析
 \`\`\`
 调用 analyze_gaps
 → 第一次调用：返回项目数据 + 能力注册表，供 Agent 分析
@@ -289,7 +330,7 @@ Agent 的角色是 **第四个分析者**——拿到三层输入后，做四维
 → 精准追问列表
 \`\`\`
 
-### Step 5: 精准追问
+### Step 6: 精准追问
 \`\`\`
 Agent 带着分析结果向业务方确认：
 - 控制权边界（哪些全自动、哪些人工确认）
@@ -298,18 +339,48 @@ Agent 带着分析结果向业务方确认：
 - 关键决策点
 \`\`\`
 
-### Step 6: 生成执行手册
+### Step 7: 生成执行手册
 \`\`\`
 调用 generate_harness
 ← 完整的手册结构 + Markdown 内容
 → 存储手册，注册新能力到注册表
 \`\`\`
 
-### Step 7: 发布 & 执行
+### Step 8: 手册质量自检 🚦
 \`\`\`
+调用 validate_harness
+→ 七维度结构性检查（控制权覆盖、失败处理、人工确认点、配置外置、实施可行性、数据架构、依赖闭环）
+→ 如果通过（无 critical）→ 继续发布
+→ 如果不通过 → 回到 Step 7 修订
+\`\`\`
+
+### Step 9: 发布 & 执行
+\`\`\`
+调用 export_handbook → 导出 Markdown 或 JSON
 Agent 将手册发布为飞书文档
 按手册逐阶段执行
 \`\`\`
+
+### Step 10: 运行时健康检查 🔄
+\`\`\`
+定期调用 health_check
+→ 收集运行数据（转化率、异常率、人工干预率、配置变更）
+→ 生成健康报告
+→ 如果 needs_revision=true → 回到 Step 5 重新分析和修订
+\`\`\`
+
+## 质量自省闭环
+
+\`\`\`
+输入质量门禁 → 分析 → 生成 → 手册质量自检 → 执行 → 健康检查
+     ↑                                                    │
+     └──────────── needs_revision=true ←──────────────────┘
+\`\`\`
+
+三层质量控制：
+1. **assess_inputs** — 生成前：输入够不够好？
+2. **validate_harness** — 生成后：手册质量过不过关？
+3. **health_check** — 运行时：实际效果怎么样？需不需要修订？
 
 ## Harness Engineering 五约束
 
