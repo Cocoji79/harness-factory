@@ -271,6 +271,24 @@ harness-factory/
 └── tsconfig.json
 ```
 
+## Changelog
+
+### 0.2.0 (2026-04-02)
+
+- 12 MCP Tools + 2 Resources, full CRUD
+- Three-layer input: strategic vision + knowledge base + frontline interviews
+- Four-dimensional gap analysis (vision vs reality, docs vs reality, pain points, AI opportunities)
+- Four expert identities in tool descriptions (domain expert, first-principles, long-term, AI capability)
+- Pre-populated capability registry (24 Feishu skills)
+- Handbook export (markdown / JSON)
+- Immutable data patterns, defensive error handling, project ID validation
+
+### 0.1.0 (2026-04-02)
+
+- Initial MCP server with stdio transport
+- Core workflow: vision → interview → analysis → handbook generation
+- File-based project and capability storage
+
 ## License
 
 MIT

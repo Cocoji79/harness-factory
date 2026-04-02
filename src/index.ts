@@ -59,7 +59,7 @@ const store = new Store(DATA_DIR);
 const server = new Server(
   {
     name: "harness-factory",
-    version: "0.1.0",
+    version: "0.2.0",
   },
   {
     capabilities: {
