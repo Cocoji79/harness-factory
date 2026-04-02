@@ -34,7 +34,16 @@ export class Store {
     return project;
   }
 
+  private validateId(id: string): void {
+    if (!id || !/^[a-zA-Z0-9_-]+$/.test(id)) {
+      throw new Error(
+        `无效的项目 ID: "${id}"，只允许字母、数字、下划线和连字符`,
+      );
+    }
+  }
+
   async getProject(id: string): Promise<Project> {
+    this.validateId(id);
     const path = join(this.projectsDir, `${id}.json`);
     const data = await readFile(path, "utf-8");
     return JSON.parse(data) as Project;
@@ -77,6 +86,7 @@ export class Store {
   }
 
   async deleteProject(id: string): Promise<void> {
+    this.validateId(id);
     const path = join(this.projectsDir, `${id}.json`);
     await unlink(path);
   }

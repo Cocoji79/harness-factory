@@ -86,7 +86,7 @@ Step 7: 发布 & 执行             → Agent 按手册逐阶段落地
 
 ```bash
 # 安装
-git clone https://github.com/anthropics/harness-factory.git
+git clone https://github.com/Cocoji79/harness-factory.git
 cd harness-factory
 npm install
 npm run build
@@ -221,7 +221,7 @@ Each business process grows the capability registry. New Skills are auto-registe
 
 ```bash
 # Install
-git clone https://github.com/anthropics/harness-factory.git
+git clone https://github.com/Cocoji79/harness-factory.git
 cd harness-factory
 npm install
 npm run build
