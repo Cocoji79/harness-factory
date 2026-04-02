@@ -238,27 +238,31 @@ export async function handleAnalyzeGaps(
 
   // If analysis is provided, save it
   if (args.gap_analysis) {
-    project.analysis = args.gap_analysis;
-    project.status = "analyzing";
-    await store.saveProject(project);
+    const analysis = args.gap_analysis;
+    const updated = {
+      ...project,
+      analysis,
+      status: "analyzing" as const,
+    };
+    await store.saveProject(updated);
 
     return JSON.stringify(
       {
         project_id: project.id,
         status: "analysis_saved",
         summary: {
-          gaps_found: project.analysis.vision_vs_reality.length,
-          docs_vs_reality_gaps: project.analysis.docs_vs_reality?.length ?? 0,
-          pain_points: project.analysis.pain_points_prioritized.length,
-          ai_opportunities: project.analysis.ai_native_opportunities.length,
-          capability_matches: project.analysis.capability_matches.length,
-          capability_gaps: project.analysis.capability_gaps.length,
-          targeted_questions: project.analysis.recommended_questions.length,
-          redesigned_stages: project.analysis.redesigned_process.length,
+          gaps_found: analysis.vision_vs_reality.length,
+          docs_vs_reality_gaps: analysis.docs_vs_reality?.length ?? 0,
+          pain_points: analysis.pain_points_prioritized.length,
+          ai_opportunities: analysis.ai_native_opportunities.length,
+          capability_matches: analysis.capability_matches.length,
+          capability_gaps: analysis.capability_gaps.length,
+          targeted_questions: analysis.recommended_questions.length,
+          redesigned_stages: analysis.redesigned_process.length,
         },
         next_steps: [
-          project.analysis.recommended_questions.length > 0
-            ? `有 ${project.analysis.recommended_questions.length} 个精准追问需要向业务方确认`
+          analysis.recommended_questions.length > 0
+            ? `有 ${analysis.recommended_questions.length} 个精准追问需要向业务方确认`
             : null,
           "确认完毕后，调用 generate_harness 生成执行手册",
         ].filter(Boolean),

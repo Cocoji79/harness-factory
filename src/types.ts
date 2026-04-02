@@ -5,7 +5,7 @@ export interface Project {
   business_name: string;
   created_at: string;
   updated_at: string;
-  status: "gathering" | "analyzing" | "generating" | "published";
+  status: "gathering" | "analyzing" | "generated";
   vision?: VisionData;
   knowledge_bases: KnowledgeBaseData[];
   interviews: InterviewData[];

@@ -106,7 +106,7 @@ export async function handleIngestInterview(
   const project = await store.getProject(args.project_id);
 
   const interview: InterviewData = {
-    id: randomUUID().slice(0, 8),
+    id: randomUUID().slice(0, 12),
     interviewee_role: args.interviewee_role,
     source_type: args.source_type,
     raw_content: args.content,
@@ -117,8 +117,11 @@ export async function handleIngestInterview(
     time_costs: args.time_costs ?? [],
   };
 
-  project.interviews.push(interview);
-  await store.saveProject(project);
+  const updated = {
+    ...project,
+    interviews: [...project.interviews, interview],
+  };
+  await store.saveProject(updated);
 
   const extractionGuidance: string[] = [];
   if (interview.actual_process.length === 0)
@@ -151,7 +154,7 @@ export async function handleIngestInterview(
         workarounds_count: interview.workarounds.length,
         time_costs_count: interview.time_costs.length,
       },
-      total_interviews: project.interviews.length,
+      total_interviews: updated.interviews.length,
       extraction_guidance:
         extractionGuidance.length > 0
           ? extractionGuidance

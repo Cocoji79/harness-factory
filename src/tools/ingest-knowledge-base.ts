@@ -122,7 +122,7 @@ export async function handleIngestKnowledgeBase(
   const project = await store.getProject(args.project_id);
 
   const kb: KnowledgeBaseData = {
-    id: randomUUID().slice(0, 8),
+    id: randomUUID().slice(0, 12),
     source_type: args.source_type,
     source_url: args.source_url,
     space_name: args.space_name,
@@ -135,8 +135,11 @@ export async function handleIngestKnowledgeBase(
     staleness_notes: args.staleness_notes ?? [],
   };
 
-  project.knowledge_bases.push(kb);
-  await store.saveProject(project);
+  const updated = {
+    ...project,
+    knowledge_bases: [...project.knowledge_bases, kb],
+  };
+  await store.saveProject(updated);
 
   const extractionGuidance: string[] = [];
   if (kb.documented_processes.length === 0)
@@ -170,7 +173,7 @@ export async function handleIngestKnowledgeBase(
         staleness_notes_count: kb.staleness_notes.length,
         last_updated_hint: kb.last_updated_hint ?? "未知",
       },
-      total_knowledge_bases: project.knowledge_bases.length,
+      total_knowledge_bases: updated.knowledge_bases.length,
       extraction_guidance:
         extractionGuidance.length > 0 ? extractionGuidance : ["知识库数据提取完整"],
       cross_reference_hints: [

@@ -18,6 +18,9 @@
     "@types/node": "^22.15.2",
     "typescript": "^5.8.3"
   },
+  "engines": {
+    "node": ">=18"
+  },
   "files": [
     "dist",
     "data"

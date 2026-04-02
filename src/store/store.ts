@@ -3,6 +3,13 @@ import { join } from "node:path";
 import { randomUUID } from "node:crypto";
 import type { Project, Capability } from "../types.js";
 
+/**
+ * File-based storage layer for projects and capabilities.
+ *
+ * NOTE: Read-modify-write operations (addCapability, removeCapability) are NOT
+ * concurrency-safe. This is acceptable for single-client stdio transport, but
+ * must be addressed if the server is used with SSE/multi-client transport.
+ */
 export class Store {
   private readonly dataDir: string;
   private readonly projectsDir: string;
@@ -20,18 +27,8 @@ export class Store {
 
   // ── Projects ──
 
-  async createProject(businessName: string): Promise<Project> {
-    const project: Project = {
-      id: randomUUID().slice(0, 8),
-      business_name: businessName,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      status: "gathering",
-      knowledge_bases: [],
-      interviews: [],
-    };
-    await this.saveProject(project);
-    return project;
+  private generateId(): string {
+    return randomUUID().slice(0, 12);
   }
 
   private validateId(id: string): void {
@@ -42,17 +39,39 @@ export class Store {
     }
   }
 
+  async createProject(businessName: string): Promise<Project> {
+    const now = new Date().toISOString();
+    const project: Project = {
+      id: this.generateId(),
+      business_name: businessName,
+      created_at: now,
+      updated_at: now,
+      status: "gathering",
+      knowledge_bases: [],
+      interviews: [],
+    };
+    await this.saveProject(project);
+    return project;
+  }
+
   async getProject(id: string): Promise<Project> {
     this.validateId(id);
     const path = join(this.projectsDir, `${id}.json`);
-    const data = await readFile(path, "utf-8");
-    return JSON.parse(data) as Project;
+    try {
+      const data = await readFile(path, "utf-8");
+      return JSON.parse(data) as Project;
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+        throw new Error(`项目 ${id} 不存在`);
+      }
+      throw error;
+    }
   }
 
   async saveProject(project: Project): Promise<void> {
-    project.updated_at = new Date().toISOString();
-    const path = join(this.projectsDir, `${project.id}.json`);
-    await writeFile(path, JSON.stringify(project, null, 2), "utf-8");
+    const updated = { ...project, updated_at: new Date().toISOString() };
+    const path = join(this.projectsDir, `${updated.id}.json`);
+    await writeFile(path, JSON.stringify(updated, null, 2), "utf-8");
   }
 
   async listProjects(): Promise<
@@ -63,32 +82,44 @@ export class Store {
       updated_at: string;
     }>
   > {
+    let files: string[];
     try {
-      const files = await readdir(this.projectsDir);
-      const projects = await Promise.all(
-        files
-          .filter((f) => f.endsWith(".json"))
-          .map(async (f) => {
-            const data = await readFile(join(this.projectsDir, f), "utf-8");
-            const p = JSON.parse(data) as Project;
-            return {
-              id: p.id,
-              business_name: p.business_name,
-              status: p.status,
-              updated_at: p.updated_at,
-            };
-          }),
-      );
-      return projects;
-    } catch {
-      return [];
+      files = await readdir(this.projectsDir);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+        return [];
+      }
+      throw error;
     }
+
+    const projects = await Promise.all(
+      files
+        .filter((f) => f.endsWith(".json"))
+        .map(async (f) => {
+          const data = await readFile(join(this.projectsDir, f), "utf-8");
+          const p = JSON.parse(data) as Project;
+          return {
+            id: p.id,
+            business_name: p.business_name,
+            status: p.status,
+            updated_at: p.updated_at,
+          };
+        }),
+    );
+    return projects;
   }
 
   async deleteProject(id: string): Promise<void> {
     this.validateId(id);
     const path = join(this.projectsDir, `${id}.json`);
-    await unlink(path);
+    try {
+      await unlink(path);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+        throw new Error(`项目 ${id} 不存在`);
+      }
+      throw error;
+    }
   }
 
   // ── Capability Registry ──
@@ -97,8 +128,11 @@ export class Store {
     try {
       const data = await readFile(this.registryPath, "utf-8");
       return JSON.parse(data) as Capability[];
-    } catch {
-      return [];
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+        return [];
+      }
+      throw error;
     }
   }
 
@@ -115,20 +149,18 @@ export class Store {
     const existingIndex = capabilities.findIndex(
       (c) => c.name === capability.name,
     );
-    if (existingIndex >= 0) {
-      capabilities[existingIndex] = capability;
-    } else {
-      capabilities.push(capability);
-    }
-    await this.saveCapabilities(capabilities);
+    const updated =
+      existingIndex >= 0
+        ? capabilities.map((c, i) => (i === existingIndex ? capability : c))
+        : [...capabilities, capability];
+    await this.saveCapabilities(updated);
   }
 
   async removeCapability(name: string): Promise<boolean> {
     const capabilities = await this.getCapabilities();
-    const index = capabilities.findIndex((c) => c.name === name);
-    if (index < 0) return false;
-    capabilities.splice(index, 1);
-    await this.saveCapabilities(capabilities);
+    const filtered = capabilities.filter((c) => c.name !== name);
+    if (filtered.length === capabilities.length) return false;
+    await this.saveCapabilities(filtered);
     return true;
   }
 

@@ -121,9 +121,8 @@ export async function handleIngestVision(
     ai_opportunities: args.ai_opportunities ?? [],
   };
 
-  project.vision = vision;
-  project.status = "gathering";
-  await store.saveProject(project);
+  const updated = { ...project, vision, status: "gathering" as const };
+  await store.saveProject(updated);
 
   const missingInfo: string[] = [];
   if (vision.goals.length === 0) missingInfo.push("业务目标尚未明确，请补充");
@@ -151,8 +150,8 @@ export async function handleIngestVision(
         missingInfo.length > 0
           ? "请补充以上缺失信息（可通过再次调用 ingest_vision 更新）"
           : null,
-        "接下来请调用 ingest_interview 输入一线人员的访谈记录",
-        "访谈记录可以来自飞书妙记转写、人工访谈文字记录、或飞书文档",
+        "建议先调用 ingest_knowledge_base 输入部门知识库/制度文档/SOP（强烈推荐，用于发现文档与实际的偏差）",
+        "然后调用 ingest_interview 输入一线人员的访谈记录（飞书妙记转写、人工访谈文字记录、或飞书文档）",
       ].filter(Boolean),
     },
     null,

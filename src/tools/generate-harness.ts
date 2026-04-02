@@ -198,20 +198,23 @@ export async function handleGenerateHarness(
     });
   }
 
-  project.harness = args.harness;
-  project.status = "generating";
-  await store.saveProject(project);
+  const updated = {
+    ...project,
+    harness: args.harness,
+    status: "generated" as const,
+  };
+  await store.saveProject(updated);
 
-  // Update capability registry with new skills
+  // Register new skills to capability registry (flywheel effect)
   for (const skill of args.harness.new_skills) {
     await store.addCapability({
       name: skill.name,
       category: project.business_name,
       description: skill.purpose,
-      input: skill.capabilities?.join(", ") ?? "",
-      output: "",
+      input: skill.dependencies?.join(", ") ?? "",
+      output: skill.capabilities?.join(", ") ?? "",
       feishu_apis: [],
-      reusable_patterns: [],
+      reusable_patterns: skill.capabilities ?? [],
     });
   }
 
@@ -232,8 +235,8 @@ export async function handleGenerateHarness(
       },
       new_skills_registered: args.harness.new_skills.map((s) => s.name),
       next_steps: [
-        "手册已生成，可以调用 publish_handbook 发布为飞书文档",
-        "发布后 Agent 可以按手册逐阶段执行",
+        "手册已生成，可以调用 export_handbook 导出 Markdown 或 JSON 格式",
+        "导出后可通过飞书文档 API 发布，然后 Agent 按手册逐阶段执行",
       ],
     },
     null,
