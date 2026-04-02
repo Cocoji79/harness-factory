@@ -27,6 +27,7 @@ export class Store {
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       status: "gathering",
+      knowledge_bases: [],
       interviews: [],
     };
     await this.saveProject(project);
@@ -45,7 +46,14 @@ export class Store {
     await writeFile(path, JSON.stringify(project, null, 2), "utf-8");
   }
 
-  async listProjects(): Promise<Array<{ id: string; business_name: string; status: string; updated_at: string }>> {
+  async listProjects(): Promise<
+    Array<{
+      id: string;
+      business_name: string;
+      status: string;
+      updated_at: string;
+    }>
+  > {
     try {
       const files = await readdir(this.projectsDir);
       const projects = await Promise.all(
@@ -60,7 +68,7 @@ export class Store {
               status: p.status,
               updated_at: p.updated_at,
             };
-          })
+          }),
       );
       return projects;
     } catch {
@@ -80,12 +88,18 @@ export class Store {
   }
 
   async saveCapabilities(capabilities: Capability[]): Promise<void> {
-    await writeFile(this.registryPath, JSON.stringify(capabilities, null, 2), "utf-8");
+    await writeFile(
+      this.registryPath,
+      JSON.stringify(capabilities, null, 2),
+      "utf-8",
+    );
   }
 
   async addCapability(capability: Capability): Promise<void> {
     const capabilities = await this.getCapabilities();
-    const existingIndex = capabilities.findIndex((c) => c.name === capability.name);
+    const existingIndex = capabilities.findIndex(
+      (c) => c.name === capability.name,
+    );
     if (existingIndex >= 0) {
       capabilities[existingIndex] = capability;
     } else {
@@ -102,7 +116,7 @@ export class Store {
         c.name.toLowerCase().includes(lower) ||
         c.description.toLowerCase().includes(lower) ||
         c.category.toLowerCase().includes(lower) ||
-        c.reusable_patterns.some((p) => p.toLowerCase().includes(lower))
+        c.reusable_patterns.some((p) => p.toLowerCase().includes(lower)),
     );
   }
 }

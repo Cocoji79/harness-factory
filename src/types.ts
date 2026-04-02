@@ -7,9 +7,26 @@ export interface Project {
   updated_at: string;
   status: "gathering" | "analyzing" | "generating" | "published";
   vision?: VisionData;
+  knowledge_bases: KnowledgeBaseData[];
   interviews: InterviewData[];
   analysis?: GapAnalysis;
   harness?: HarnessDocument;
+}
+
+// ── Knowledge Base ──
+
+export interface KnowledgeBaseData {
+  id: string;
+  source_type: "feishu_wiki" | "feishu_doc" | "manual";
+  source_url?: string;
+  space_name?: string;
+  raw_content: string;
+  documented_processes: DocumentedProcess[];
+  policies_and_rules: string[];
+  sop_list: SOPItem[];
+  forms_and_templates: string[];
+  last_updated_hint?: string;
+  staleness_notes: string[];
 }
 
 // ── Vision ──
@@ -38,6 +55,21 @@ export interface ProcessStage {
   output: string;
   should_automate: boolean;
   notes: string;
+}
+
+export interface DocumentedProcess {
+  name: string;
+  description: string;
+  steps: string[];
+  responsible_role: string;
+  status: "active" | "outdated" | "draft";
+}
+
+export interface SOPItem {
+  name: string;
+  description: string;
+  last_updated: string;
+  compliance_required: boolean;
 }
 
 // ── Interview ──
@@ -74,12 +106,22 @@ export interface TimeCost {
 
 export interface GapAnalysis {
   vision_vs_reality: GapItem[];
+  docs_vs_reality: DocsRealityGap[];
   pain_points_prioritized: PrioritizedItem[];
   ai_native_opportunities: AINativeOpportunity[];
   capability_matches: CapabilityMatch[];
   capability_gaps: CapabilityGap[];
   recommended_questions: TargetedQuestion[];
   redesigned_process: RedesignedStage[];
+}
+
+export interface DocsRealityGap {
+  process_name: string;
+  documented_version: string;
+  actual_version: string;
+  gap_type: "outdated" | "incomplete" | "ignored" | "missing_doc";
+  severity: "high" | "medium" | "low";
+  recommendation: string;
 }
 
 export interface GapItem {
@@ -133,7 +175,11 @@ export interface TargetedQuestion {
 export interface RedesignedStage {
   name: string;
   description: string;
-  control_level: "full_auto" | "auto_with_review" | "human_confirmed" | "human_only";
+  control_level:
+    | "full_auto"
+    | "auto_with_review"
+    | "human_confirmed"
+    | "human_only";
   skills_used: string[];
   new_skills_needed: string[];
   data_in: string;
@@ -172,7 +218,11 @@ export interface TableField {
 export interface ControlMatrixEntry {
   stage: string;
   action: string;
-  control_level: "full_auto" | "auto_with_review" | "human_confirmed" | "human_only";
+  control_level:
+    | "full_auto"
+    | "auto_with_review"
+    | "human_confirmed"
+    | "human_only";
   description: string;
 }
 
