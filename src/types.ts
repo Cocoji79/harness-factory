@@ -268,6 +268,6 @@ export interface Capability {
   description: string;
   input: string;
   output: string;
-  platform_apis: string[];
+  feishu_apis: string[];
   reusable_patterns: string[];
 }

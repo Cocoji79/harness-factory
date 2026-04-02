@@ -40,10 +40,10 @@ export const REGISTER_CAPABILITY_SCHEMA = {
       description: { type: "string", description: "能力描述" },
       input: { type: "string", description: "输入描述" },
       output: { type: "string", description: "输出描述" },
-      platform_apis: {
+      feishu_apis: {
         type: "array",
         items: { type: "string" },
-        description: "依赖的平台 API（如飞书、Slack、Google Workspace 等）",
+        description: "依赖的飞书 API",
       },
       reusable_patterns: {
         type: "array",
@@ -124,7 +124,7 @@ export async function handleRegisterCapability(
     description: string;
     input?: string;
     output?: string;
-    platform_apis?: string[];
+    feishu_apis?: string[];
     reusable_patterns?: string[];
   },
 ): Promise<string> {
@@ -134,7 +134,7 @@ export async function handleRegisterCapability(
     description: args.description,
     input: args.input ?? "",
     output: args.output ?? "",
-    platform_apis: args.platform_apis ?? [],
+    feishu_apis: args.feishu_apis ?? [],
     reusable_patterns: args.reusable_patterns ?? [],
   };
 

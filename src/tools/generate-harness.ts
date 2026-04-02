@@ -210,7 +210,7 @@ export async function handleGenerateHarness(
       description: skill.purpose,
       input: skill.capabilities?.join(", ") ?? "",
       output: "",
-      platform_apis: [],
+      feishu_apis: [],
       reusable_patterns: [],
     });
   }
