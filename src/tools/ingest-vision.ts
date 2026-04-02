@@ -11,7 +11,11 @@ export const INGEST_VISION_SCHEMA = {
 - 战略规划文档、OKR、业务方向说明
 - 对未来流程的构想
 
-调用后会创建一个新项目（或更新已有项目），并返回结构化的战略视角数据。`,
+调用后会创建一个新项目（或更新已有项目），并返回结构化的战略视角数据。
+
+重要：business_name 决定了你在后续分析中的领域专家角色。
+例如 business_name="招聘" → 你是 HR 领域专家；business_name="合同审批" → 你是法务/合规专家。
+请在理解战略视角时就切换到对应的专业视角，用第一性原理思考这个业务本质上要解决什么问题。`,
   inputSchema: {
     type: "object" as const,
     properties: {
@@ -96,7 +100,7 @@ export async function handleIngestVision(
     stakeholders?: Stakeholder[];
     ideal_process?: ProcessStage[];
     ai_opportunities?: string[];
-  }
+  },
 ): Promise<string> {
   let project;
 
@@ -123,7 +127,8 @@ export async function handleIngestVision(
 
   const missingInfo: string[] = [];
   if (vision.goals.length === 0) missingInfo.push("业务目标尚未明确，请补充");
-  if (vision.stakeholders.length === 0) missingInfo.push("干系人尚未识别，请补充涉及哪些角色");
+  if (vision.stakeholders.length === 0)
+    missingInfo.push("干系人尚未识别，请补充涉及哪些角色");
   if (vision.ideal_process.length === 0)
     missingInfo.push("理想流程阶段尚未定义，请描述期望的流程是什么样的");
   if (vision.ai_opportunities.length === 0)
@@ -151,6 +156,6 @@ export async function handleIngestVision(
       ].filter(Boolean),
     },
     null,
-    2
+    2,
   );
 }

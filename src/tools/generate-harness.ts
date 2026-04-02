@@ -14,6 +14,12 @@ export const GENERATE_HARNESS_SCHEMA = {
 
 调用前请确保已完成 analyze_gaps。
 
+生成手册时，继续保持 analyze_gaps 中的四重身份：
+1. **领域专家** — 手册中的术语、流程设计要符合该行业的专业实践
+2. **第一性原理** — 控制权矩阵和流程设计要回到本质，不要照搬旧流程
+3. **长期发展** — 数据架构和 Skill 设计要留有扩展空间
+4. **AI 能力边界** — 控制权分配要诚实：AI 能做好的放手，AI 做不好的明确标注人工介入
+
 你需要传入完整的 harness 文档结构（包含 markdown_content），
 因为手册生成需要 AI 的写作能力来产出高质量的飞书文档内容。`,
   inputSchema: {
@@ -66,7 +72,12 @@ export const GENERATE_HARNESS_SCHEMA = {
                 action: { type: "string" },
                 control_level: {
                   type: "string",
-                  enum: ["full_auto", "auto_with_review", "human_confirmed", "human_only"],
+                  enum: [
+                    "full_auto",
+                    "auto_with_review",
+                    "human_confirmed",
+                    "human_only",
+                  ],
                 },
                 description: { type: "string" },
               },
@@ -119,10 +130,19 @@ export const GENERATE_HARNESS_SCHEMA = {
                 number: { type: "number" },
                 name: { type: "string" },
                 self_driven_tasks: { type: "array", items: { type: "string" } },
-                needs_confirmation: { type: "array", items: { type: "string" } },
+                needs_confirmation: {
+                  type: "array",
+                  items: { type: "string" },
+                },
                 completion_criteria: { type: "string" },
               },
-              required: ["number", "name", "self_driven_tasks", "needs_confirmation", "completion_criteria"],
+              required: [
+                "number",
+                "name",
+                "self_driven_tasks",
+                "needs_confirmation",
+                "completion_criteria",
+              ],
             },
           },
           communication_checklist: {
@@ -131,7 +151,10 @@ export const GENERATE_HARNESS_SCHEMA = {
               type: "object",
               properties: {
                 item: { type: "string" },
-                priority: { type: "string", enum: ["before_start", "during", "after"] },
+                priority: {
+                  type: "string",
+                  enum: ["before_start", "during", "after"],
+                },
                 status: { type: "string", enum: ["pending", "confirmed"] },
               },
               required: ["item", "priority"],
@@ -165,7 +188,7 @@ export async function handleGenerateHarness(
   args: {
     project_id: string;
     harness: HarnessDocument;
-  }
+  },
 ): Promise<string> {
   const project = await store.getProject(args.project_id);
 
@@ -214,6 +237,6 @@ export async function handleGenerateHarness(
       ],
     },
     null,
-    2
+    2,
   );
 }
