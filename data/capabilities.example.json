@@ -1,0 +1,218 @@
+[
+  {
+    "name": "/lark-doc",
+    "category": "飞书文档",
+    "description": "创建和编辑飞书文档（Markdown 转飞书格式），获取文档内容，文档评论管理",
+    "input": "Markdown 内容、文档 URL/token",
+    "output": "飞书文档",
+    "feishu_apis": ["docx.*", "drive.file.comments.*"],
+    "reusable_patterns": ["文档生成", "内容发布"]
+  },
+  {
+    "name": "/lark-base",
+    "category": "飞书多维表格",
+    "description": "多维表格高级操作：建表、字段管理、记录读写、视图配置、仪表盘",
+    "input": "表结构定义、记录数据",
+    "output": "多维表格记录",
+    "feishu_apis": ["bitable.*"],
+    "reusable_patterns": ["数据存储", "状态管理", "看板视图", "配置管理"]
+  },
+  {
+    "name": "/lark-sheets",
+    "category": "飞书电子表格",
+    "description": "创建表格、读写单元格、追加数据、多范围批量读写、导出",
+    "input": "表格数据",
+    "output": "电子表格",
+    "feishu_apis": ["sheets.*"],
+    "reusable_patterns": ["数据导出", "报表生成"]
+  },
+  {
+    "name": "/lark-calendar",
+    "category": "飞书日历",
+    "description": "查看/创建/更新/删除日程，忙闲查询（多人），会议室列表、空闲查询、预约",
+    "input": "时间范围、参会人",
+    "output": "日程、忙闲状态、会议室",
+    "feishu_apis": ["calendar.*", "vc.room.*"],
+    "reusable_patterns": ["时间协调", "日程管理", "会议室预约"]
+  },
+  {
+    "name": "/lark-task",
+    "category": "飞书待办",
+    "description": "查看/创建/更新/完成/删除待办，设截止时间、提醒、指派",
+    "input": "任务描述、指派人",
+    "output": "待办任务",
+    "feishu_apis": ["task.*"],
+    "reusable_patterns": ["任务分配", "进度跟踪"]
+  },
+  {
+    "name": "/lark-im",
+    "category": "飞书即时通讯",
+    "description": "发消息（文字、文件、@人、回复）、批量群发、撤回、创建群聊、拉人入群、聊天记录搜索",
+    "input": "消息内容、目标群聊/用户",
+    "output": "消息",
+    "feishu_apis": ["im.*"],
+    "reusable_patterns": ["通知推送", "结果汇报", "异常告警"]
+  },
+  {
+    "name": "/lark-mail",
+    "category": "飞书邮箱",
+    "description": "读写搜索邮件、管理附件、草稿、文件夹、联系人",
+    "input": "邮件内容、收件人",
+    "output": "邮件",
+    "feishu_apis": ["mail.*"],
+    "reusable_patterns": ["邮件沟通闭环", "附件处理", "邮件监听"]
+  },
+  {
+    "name": "/lark-drive",
+    "category": "飞书云盘",
+    "description": "上传/下载文件、创建文件夹、复制/移动/删除、文件导入、文档权限管理",
+    "input": "文件路径、文件夹 token",
+    "output": "文件/文件夹",
+    "feishu_apis": ["drive.*"],
+    "reusable_patterns": ["文件管理", "权限控制"]
+  },
+  {
+    "name": "/lark-wiki",
+    "category": "飞书知识库",
+    "description": "浏览知识空间、查看/创建/移动/重命名节点、知识库搜索",
+    "input": "知识空间 ID、节点 token",
+    "output": "知识库节点",
+    "feishu_apis": ["wiki.*"],
+    "reusable_patterns": ["知识沉淀", "文档组织"]
+  },
+  {
+    "name": "/lark-contact",
+    "category": "飞书通讯录",
+    "description": "查询组织架构、人员信息、按姓名/邮箱/手机号搜索员工",
+    "input": "搜索关键词",
+    "output": "员工信息（open_id、姓名、部门等）",
+    "feishu_apis": ["contact.*"],
+    "reusable_patterns": ["人员查找", "组织架构查询"]
+  },
+  {
+    "name": "/lark-minutes",
+    "category": "飞书妙记",
+    "description": "读取妙记内容（标题、时长、对话文本、音视频链接）、访问统计",
+    "input": "妙记 URL/token",
+    "output": "妙记内容、转写文本",
+    "feishu_apis": ["minutes.*"],
+    "reusable_patterns": ["会议记录提取", "语音转文字"]
+  },
+  {
+    "name": "/lark-vc",
+    "category": "飞书视频会议",
+    "description": "查询已结束会议、获取会议纪要（总结、待办、章节、逐字稿）",
+    "input": "时间范围、会议 ID",
+    "output": "会议纪要",
+    "feishu_apis": ["vc.*"],
+    "reusable_patterns": ["会议纪要整理"]
+  },
+  {
+    "name": "/lark-event",
+    "category": "飞书事件订阅",
+    "description": "通过 WebSocket 实时监听飞书事件（消息、通讯录变更、日历变更等）",
+    "input": "事件类型",
+    "output": "事件流",
+    "feishu_apis": ["event.*"],
+    "reusable_patterns": ["实时监听", "事件驱动"]
+  },
+  {
+    "name": "/lark-whiteboard",
+    "category": "飞书画板",
+    "description": "在飞书云文档中绘制架构图、流程图、思维导图、时序图",
+    "input": "图表描述",
+    "output": "飞书画板",
+    "feishu_apis": ["whiteboard.*"],
+    "reusable_patterns": ["流程可视化", "架构图"]
+  },
+  {
+    "name": "/lark-resume-pipeline",
+    "category": "HR/招聘",
+    "description": "从飞书邮箱批量提取候选人简历，解析关键信息，存入飞书多维表格",
+    "input": "邮箱",
+    "output": "候选人多维表格记录",
+    "feishu_apis": ["mail.*", "bitable.*"],
+    "reusable_patterns": ["邮件提取入表", "附件解析"]
+  },
+  {
+    "name": "/ai-native-recruiter",
+    "category": "HR/招聘",
+    "description": "简历深度解析与评分（120分制），GitHub 交叉验证，面试指引",
+    "input": "候选人简历",
+    "output": "评分报告、面试建议",
+    "feishu_apis": [],
+    "reusable_patterns": ["AI 评估评分", "多维度分析"]
+  },
+  {
+    "name": "/ai-interview-evaluator",
+    "category": "HR/招聘",
+    "description": "面试录音/转写分析，评估候选人表现",
+    "input": "面试录音/转写",
+    "output": "面试评估报告",
+    "feishu_apis": [],
+    "reusable_patterns": ["音频分析", "评估报告"]
+  },
+  {
+    "name": "/daily-work-review",
+    "category": "日常办公",
+    "description": "个人工作日复盘（日历+消息+待办分析）",
+    "input": "日期范围",
+    "output": "复盘报告",
+    "feishu_apis": ["calendar.*", "im.*", "task.*"],
+    "reusable_patterns": ["定时复盘", "多源数据聚合"]
+  },
+  {
+    "name": "/deep-research",
+    "category": "数据/搜索",
+    "description": "多源深度调研+引用报告",
+    "input": "调研主题",
+    "output": "调研报告",
+    "feishu_apis": [],
+    "reusable_patterns": ["多源调研", "报告生成"]
+  },
+  {
+    "name": "/code-review",
+    "category": "代码/工程",
+    "description": "代码审查",
+    "input": "代码变更",
+    "output": "审查报告",
+    "feishu_apis": [],
+    "reusable_patterns": ["代码分析"]
+  },
+  {
+    "name": "飞书审批",
+    "category": "飞书原生",
+    "description": "查询审批定义（表单结构），代用户发起审批（含附件自动上传）",
+    "input": "审批表单数据",
+    "output": "审批实例",
+    "feishu_apis": ["approval.*"],
+    "reusable_patterns": ["审批发起", "表单填充"]
+  },
+  {
+    "name": "定时任务",
+    "category": "核心能力",
+    "description": "创建定时任务（Cron 表达式调度），执行后自动审核+推送结果",
+    "input": "Cron 表达式、执行内容",
+    "output": "定时执行结果",
+    "feishu_apis": [],
+    "reusable_patterns": ["定时调度", "轮询监控"]
+  },
+  {
+    "name": "记忆系统",
+    "category": "核心能力",
+    "description": "记住偏好、决策、项目上下文，下次对话自动调用",
+    "input": "对话上下文",
+    "output": "持久化记忆",
+    "feishu_apis": [],
+    "reusable_patterns": ["上下文记忆", "偏好管理"]
+  },
+  {
+    "name": "任务管理",
+    "category": "核心能力",
+    "description": "接收需求→拆解→派工给执行团队→审核交付→回复",
+    "input": "需求描述",
+    "output": "交付结果",
+    "feishu_apis": [],
+    "reusable_patterns": ["任务编排", "多Agent协作", "交付审核"]
+  }
+]

@@ -10,7 +10,7 @@ export const ANALYZE_GAPS_SCHEMA = {
 1. 战略视角（应该怎么做）vs 一线访谈（实际怎么做）→ 找出愿景与现实的差距
 2. 知识库（文档里怎么写的）vs 一线访谈（实际怎么做）→ 找出文档与执行的偏差
 3. 一线访谈中的痛点 → 识别效率最低、最该自动化的环节
-4. Anya 能力池（能做什么）→ 发现 AI 原生的可能性
+4. Agent 能力池（能做什么）→ 发现 AI 原生的可能性
 
 四维分析的价值：
 - 知识库有但没人看 → 文档过时或不实用
@@ -307,7 +307,7 @@ export async function handleAnalyzeGaps(
         step_4:
           "思考 AI 时代的原生做法——哪些环节不应该简单数字化，而应该重新设计（ai_native_opportunities）。注意：知识库中的合规要求是硬约束，必须保留",
         step_5:
-          "将重构后的流程与 Anya 能力注册表匹配（capability_matches + capability_gaps）",
+          "将重构后的流程与 Agent 能力注册表匹配（capability_matches + capability_gaps）",
         step_6:
           "生成精准追问——带着分析结果，向业务方确认关键决策点（recommended_questions）",
         step_7:

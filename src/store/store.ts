@@ -1,4 +1,4 @@
-import { readFile, writeFile, mkdir, readdir } from "node:fs/promises";
+import { readFile, writeFile, mkdir, readdir, unlink } from "node:fs/promises";
 import { join } from "node:path";
 import { randomUUID } from "node:crypto";
 import type { Project, Capability } from "../types.js";
@@ -76,6 +76,11 @@ export class Store {
     }
   }
 
+  async deleteProject(id: string): Promise<void> {
+    const path = join(this.projectsDir, `${id}.json`);
+    await unlink(path);
+  }
+
   // ── Capability Registry ──
 
   async getCapabilities(): Promise<Capability[]> {
@@ -106,6 +111,15 @@ export class Store {
       capabilities.push(capability);
     }
     await this.saveCapabilities(capabilities);
+  }
+
+  async removeCapability(name: string): Promise<boolean> {
+    const capabilities = await this.getCapabilities();
+    const index = capabilities.findIndex((c) => c.name === name);
+    if (index < 0) return false;
+    capabilities.splice(index, 1);
+    await this.saveCapabilities(capabilities);
+    return true;
   }
 
   async searchCapabilities(query: string): Promise<Capability[]> {

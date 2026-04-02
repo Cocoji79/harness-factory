@@ -3,9 +3,9 @@ import type { HarnessDocument } from "../types.js";
 
 export const GENERATE_HARNESS_SCHEMA = {
   name: "generate_harness",
-  description: `基于分析结果生成完整的 Anya 执行手册（Harness Document）。
+  description: `基于分析结果生成完整的 Agent 执行手册（Harness Document）。
 
-这是流水线的产出物——一份结构化的手册，Anya 看完后就能明确：
+这是流水线的产出物——一份结构化的手册，Agent 看完后就能明确：
 1. 要建什么数据表
 2. 要构建/复用哪些 Skill
 3. 每个动作的控制权（全自动 vs 人工确认）
@@ -210,7 +210,7 @@ export async function handleGenerateHarness(
       description: skill.purpose,
       input: skill.capabilities?.join(", ") ?? "",
       output: "",
-      feishu_apis: [],
+      platform_apis: [],
       reusable_patterns: [],
     });
   }
@@ -233,7 +233,7 @@ export async function handleGenerateHarness(
       new_skills_registered: args.harness.new_skills.map((s) => s.name),
       next_steps: [
         "手册已生成，可以调用 publish_handbook 发布为飞书文档",
-        "发布后 Anya 可以按手册逐阶段执行",
+        "发布后 Agent 可以按手册逐阶段执行",
       ],
     },
     null,
