@@ -45,6 +45,10 @@ import {
   handleHealthCheck,
 } from "./tools/health-check.js";
 import {
+  DEFINE_NORTH_STAR_SCHEMA,
+  handleDefineNorthStar,
+} from "./tools/define-north-star.js";
+import {
   LIST_CAPABILITIES_SCHEMA,
   REGISTER_CAPABILITY_SCHEMA,
   REMOVE_CAPABILITY_SCHEMA,
@@ -71,7 +75,7 @@ const store = new Store(DATA_DIR);
 const server = new Server(
   {
     name: "harness-factory",
-    version: "0.3.0",
+    version: "0.4.0",
   },
   {
     capabilities: {
@@ -90,6 +94,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     INGEST_INTERVIEW_SCHEMA,
     ASSESS_INPUTS_SCHEMA,
     ANALYZE_GAPS_SCHEMA,
+    DEFINE_NORTH_STAR_SCHEMA,
     GENERATE_HARNESS_SCHEMA,
     VALIDATE_HARNESS_SCHEMA,
     HEALTH_CHECK_SCHEMA,
@@ -138,6 +143,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         result = await handleAnalyzeGaps(
           store,
           args as Parameters<typeof handleAnalyzeGaps>[1],
+        );
+        break;
+      case "define_north_star":
+        result = await handleDefineNorthStar(
+          store,
+          args as Parameters<typeof handleDefineNorthStar>[1],
         );
         break;
       case "generate_harness":
@@ -339,6 +350,16 @@ Agent 带着分析结果向业务方确认：
 - 关键决策点
 \`\`\`
 
+### Step 6.5: 定义北极星指标 ⭐
+\`\`\`
+调用 define_north_star
+→ 第一次调用：返回分析结果，供 Agent 按四公理筛选指标
+← 第二次调用：传入北极星定义（1个主指标 + 护栏 + 观察指标 + 故事素材）
+
+核心原则：你衡量什么，你就变成什么。
+选对指标，每次优化都创造真实价值。选错指标，团队越努力离正确方向越远。
+\`\`\`
+
 ### Step 7: 生成执行手册
 \`\`\`
 调用 generate_harness
@@ -372,15 +393,16 @@ Agent 将手册发布为飞书文档
 ## 质量自省闭环
 
 \`\`\`
-输入质量门禁 → 分析 → 生成 → 手册质量自检 → 执行 → 健康检查
-     ↑                                                    │
-     └──────────── needs_revision=true ←──────────────────┘
+输入质量门禁 → 分析 → 定义北极星 → 生成 → 手册质量自检 → 执行 → 健康检查
+     ↑                                                              │
+     └──────────────── needs_revision=true ←────────────────────────┘
 \`\`\`
 
-三层质量控制：
+四层质量控制：
 1. **assess_inputs** — 生成前：输入够不够好？
-2. **validate_harness** — 生成后：手册质量过不过关？
-3. **health_check** — 运行时：实际效果怎么样？需不需要修订？
+2. **define_north_star** — 分析后：用什么衡量成败？（你衡量什么，你就变成什么）
+3. **validate_harness** — 生成后：手册质量过不过关？
+4. **health_check** — 运行时：北极星指标趋势如何？需不需要修订？
 
 ## Harness Engineering 五约束
 

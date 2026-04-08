@@ -6,12 +6,13 @@ export const HEALTH_CHECK_SCHEMA = {
   description: `生成流水线运行时的健康报告。这是手册交付执行后的持续自省机制。
 
 在 Agent 按手册执行一段时间后，调用此 Tool 输入运行数据，生成健康报告。
-健康报告回答四个核心问题：
+健康报告回答五个核心问题：
 
 1. **各阶段转化率如何？** 哪个阶段漏斗最大？哪里有堆积？
 2. **异常率多高？** 哪些阶段产生异常最多？Top 异常原因是什么？
 3. **自动化真的有效吗？** 标为"全自动"的环节，实际有多少次需要人工干预？
 4. **配置稳定吗？** 阈值、模板被频繁修改说明初始设计不合理。
+5. **北极星指标趋势如何？** 如果项目定义了北极星指标，必须报告主指标和护栏的当前值，并与上次健康检查对比，判断趋势是向好还是恶化。主指标连续两个周期恶化 → 建议 needs_revision。护栏触及红线 → 标记 critical。
 
 如果健康报告判定"需要修订手册"（needs_revision=true），说明手册设计本身有问题，
 应该回到 analyze_gaps → generate_harness 重新迭代。
@@ -134,12 +135,55 @@ export const HEALTH_CHECK_SCHEMA = {
           },
           needs_revision: {
             type: "boolean",
-            description: "是否需要回到 analyze_gaps → generate_harness 修订手册",
+            description:
+              "是否需要回到 analyze_gaps → generate_harness 修订手册",
           },
           revision_reasons: {
             type: "array",
             items: { type: "string" },
             description: "需要修订的理由（当 needs_revision=true 时必填）",
+          },
+          north_star_tracking: {
+            type: "object",
+            description: "北极星指标追踪（仅当项目定义了北极星指标时填写）",
+            properties: {
+              primary_metric_value: {
+                type: "number",
+                description: "主指标当前值",
+              },
+              primary_metric_previous: {
+                type: "number",
+                description: "主指标上次健康检查时的值（首次填 null）",
+              },
+              primary_metric_trend: {
+                type: "string",
+                enum: ["improving", "stable", "declining"],
+                description: "主指标趋势",
+              },
+              guardrail_values: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    name: { type: "string" },
+                    current_value: { type: "string" },
+                    threshold_breached: { type: "boolean" },
+                  },
+                  required: ["name", "current_value", "threshold_breached"],
+                },
+              },
+              consecutive_decline_count: {
+                type: "number",
+                description:
+                  "主指标连续恶化的周期数。>=2 时建议 needs_revision",
+              },
+            },
+            required: [
+              "primary_metric_value",
+              "primary_metric_trend",
+              "guardrail_values",
+              "consecutive_decline_count",
+            ],
           },
         },
         required: [
@@ -214,9 +258,7 @@ export async function handleHealthCheck(
               report.overall_health === "healthy"
                 ? "流水线运行健康，继续保持"
                 : "流水线有退化迹象，建议关注以下问题：",
-              ...criticals.map(
-                (c) => `- [${c.area}] ${c.finding}`,
-              ),
+              ...criticals.map((c) => `- [${c.area}] ${c.finding}`),
               `建议 ${report.overall_health === "healthy" ? "1个月" : "2周"}后再次进行健康检查`,
             ],
       },
@@ -249,6 +291,8 @@ export async function handleHealthCheck(
           "检查配置表（阈值、模板等）在过去 30 天被修改了多少次。超过 5 次说明初始设计不合理。",
         needs_revision:
           "如果异常率 >30%，或有阶段转化率 <50%，或自动化干预率 >30%，建议标记 needs_revision=true。",
+        north_star_tracking:
+          "如果项目定义了北极星指标，必须填写 north_star_tracking：报告主指标当前值、与上次对比的趋势、护栏是否触及红线、连续恶化周期数。主指标连续 ≥2 个周期恶化 → 建议 needs_revision。护栏触及红线 → recommendations 中标记 critical。",
       },
       harness_summary: {
         business_name: project.harness.business_name,
@@ -263,6 +307,18 @@ export async function handleHealthCheck(
             health: latestReport.overall_health,
             score: latestReport.overall_score,
             needed_revision: latestReport.needs_revision,
+          }
+        : null,
+      north_star: project.north_star
+        ? {
+            primary_metric: project.north_star.primary_metric.name,
+            definition: project.north_star.primary_metric.definition,
+            frequency: project.north_star.primary_metric.frequency,
+            direction: project.north_star.primary_metric.direction,
+            guardrails: project.north_star.guardrails.map((g) => ({
+              name: g.name,
+              threshold: g.threshold,
+            })),
           }
         : null,
     },

@@ -14,6 +14,7 @@ export interface Project {
   input_assessment?: InputAssessment;
   harness_validation?: HarnessValidation;
   health_reports: HealthReport[];
+  north_star?: NorthStarDefinition;
 }
 
 // ── Knowledge Base ──
@@ -392,6 +393,21 @@ export interface HealthReport {
   recommendations: HealthRecommendation[];
   needs_revision: boolean;
   revision_reasons: string[];
+  north_star_tracking?: NorthStarTracking;
+}
+
+export interface NorthStarTracking {
+  primary_metric_value: number;
+  primary_metric_previous?: number;
+  primary_metric_trend: "improving" | "stable" | "declining";
+  guardrail_values: GuardrailValue[];
+  consecutive_decline_count: number;
+}
+
+export interface GuardrailValue {
+  name: string;
+  current_value: string;
+  threshold_breached: boolean;
 }
 
 export interface StageMetric {
@@ -431,6 +447,60 @@ export interface HealthRecommendation {
   area: string;
   finding: string;
   suggestion: string;
+}
+
+// ── North Star Metrics ──
+
+export interface NorthStarDefinition {
+  primary_metric: PrimaryMetric;
+  guardrails: GuardrailMetric[];
+  observation_metrics: ObservationMetric[];
+  stories: NarrativeStory[];
+  proxy_rationale?: string;
+  rejected_candidates: RejectedCandidate[];
+}
+
+export interface PrimaryMetric {
+  name: string;
+  definition: string;
+  measurement_method: string;
+  frequency: "daily" | "weekly" | "monthly";
+  direction: "up" | "down";
+  is_proxy: boolean;
+  four_axiom_check: FourAxiomCheck;
+}
+
+export interface FourAxiomCheck {
+  reflects_ultimate_value: boolean;
+  attributable_to_product: boolean;
+  continuously_trackable: boolean;
+  drives_correct_behavior: boolean;
+  meaningful_to_all_levels: boolean;
+  notes: string;
+}
+
+export interface GuardrailMetric {
+  name: string;
+  definition: string;
+  threshold: string;
+  prevents: string;
+}
+
+export interface ObservationMetric {
+  name: string;
+  definition: string;
+  insight: string;
+}
+
+export interface NarrativeStory {
+  narrative: string;
+  use_case: string;
+}
+
+export interface RejectedCandidate {
+  name: string;
+  rejected_reason: string;
+  better_as: "story" | "auxiliary" | "none";
 }
 
 // ── Capability Registry ──

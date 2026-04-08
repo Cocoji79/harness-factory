@@ -20,6 +20,22 @@ export const GENERATE_HARNESS_SCHEMA = {
 3. **长期发展** — 数据架构和 Skill 设计要留有扩展空间
 4. **AI 能力边界** — 控制权分配要诚实：AI 能做好的放手，AI 做不好的明确标注人工介入
 
+## 评估与进化章节
+
+如果项目已定义了北极星指标（通过 define_north_star），
+手册的 markdown_content 中**必须**包含「评估与进化」章节，内容包括：
+
+1. **北极星指标**：主指标名称、定义、测量方法、追踪频率
+2. **护栏指标**：每个护栏的名称、红线阈值、防止什么歪行为
+3. **观察指标**：帮助理解深层模式的辅助信号
+4. **迭代规则**：
+   - 每次 Skill 迭代必须保留变更前后的指标对比数据
+   - 主指标连续两个追踪周期恶化 → 回滚到上一版本
+   - 护栏指标触及红线 → 立即暂停并排查
+5. **故事素材清单**：用于向管理层汇报和说服新部门的叙事弹药
+
+如果项目未定义北极星指标，在手册中提示"建议调用 define_north_star 定义评估指标"。
+
 你需要传入完整的 harness 文档结构（包含 markdown_content），
 因为手册生成需要 AI 的写作能力来产出高质量的飞书文档内容。`,
   inputSchema: {
@@ -198,6 +214,13 @@ export async function handleGenerateHarness(
     });
   }
 
+  if (!project.north_star) {
+    // Not blocking, but warn
+    console.error(
+      `[harness-factory] Warning: project ${args.project_id} has no north_star defined. Recommend calling define_north_star first.`,
+    );
+  }
+
   const updated = {
     ...project,
     harness: args.harness,
@@ -234,9 +257,20 @@ export async function handleGenerateHarness(
         markdown_length: args.harness.markdown_content.length,
       },
       new_skills_registered: args.harness.new_skills.map((s) => s.name),
+      north_star: project.north_star
+        ? {
+            primary_metric: project.north_star.primary_metric.name,
+            guardrails: project.north_star.guardrails.map((g) => g.name),
+            included_in_handbook: true,
+          }
+        : {
+            included_in_handbook: false,
+            recommendation:
+              "建议调用 define_north_star 定义评估指标，让手册自带进化机制",
+          },
       next_steps: [
-        "手册已生成，可以调用 export_handbook 导出 Markdown 或 JSON 格式",
-        "导出后可通过飞书文档 API 发布，然后 Agent 按手册逐阶段执行",
+        "手册已生成，可以调用 validate_harness 做质量自检",
+        "通过后调用 export_handbook 导出，然后 Agent 按手册逐阶段执行",
       ],
     },
     null,

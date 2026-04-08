@@ -5,7 +5,7 @@ export const VALIDATE_HARNESS_SCHEMA = {
   name: "validate_harness",
   description: `对已生成的执行手册做结构性质量自检。
 
-这是 generate_harness 之后的质量门禁。它检查手册的七个维度：
+这是 generate_harness 之后的质量门禁。它检查手册的八个维度：
 
 1. **控制权覆盖**：每个流程阶段都有控制权定义吗？有没有遗漏？
 2. **失败处理**：每个自动化环节都有失败兜底吗？有没有"一步出错全线崩溃"的风险？
@@ -14,6 +14,7 @@ export const VALIDATE_HARNESS_SCHEMA = {
 5. **实施可行性**：每个阶段有可验证的完成标志吗？需要确认的事项完整吗？
 6. **数据架构**：有没有主数据表？日志表？状态枚举？
 7. **依赖闭环**：新建 Skill 的依赖是否都在能力注册表中？
+8. **北极星指标**：项目是否定义了北极星指标？手册是否包含"评估与进化"章节？没有北极星指标的手册缺乏进化机制——你衡量什么，你就变成什么；不衡量，就没有方向。
 
 你需要传入验证结果（validation 字段），因为质量判断需要 AI 理解手册内容的语义——
 请基于项目中的 harness 数据和能力注册表，完成验证后回传。
@@ -58,7 +59,12 @@ export const VALIDATE_HARNESS_SCHEMA = {
               missing: { type: "array", items: { type: "string" } },
               passed: { type: "boolean" },
             },
-            required: ["auto_stages", "with_failure_handling", "missing", "passed"],
+            required: [
+              "auto_stages",
+              "with_failure_handling",
+              "missing",
+              "passed",
+            ],
           },
           human_checkpoints: {
             type: "object",
@@ -68,7 +74,11 @@ export const VALIDATE_HARNESS_SCHEMA = {
               auto_only_risk: { type: "boolean" },
               passed: { type: "boolean" },
             },
-            required: ["has_human_checkpoint", "human_confirmed_count", "passed"],
+            required: [
+              "has_human_checkpoint",
+              "human_confirmed_count",
+              "passed",
+            ],
           },
           config_externalization: {
             type: "object",
@@ -97,13 +107,21 @@ export const VALIDATE_HARNESS_SCHEMA = {
               has_status_enum: { type: "boolean" },
               passed: { type: "boolean" },
             },
-            required: ["has_main_table", "has_log_table", "has_status_enum", "passed"],
+            required: [
+              "has_main_table",
+              "has_log_table",
+              "has_status_enum",
+              "passed",
+            ],
           },
           dependency_check: {
             type: "object",
             properties: {
               new_skills: { type: "array", items: { type: "string" } },
-              missing_dependencies: { type: "array", items: { type: "string" } },
+              missing_dependencies: {
+                type: "array",
+                items: { type: "string" },
+              },
               passed: { type: "boolean" },
             },
             required: ["new_skills", "missing_dependencies", "passed"],
@@ -176,26 +194,22 @@ export async function handleValidateHarness(
         overall_score: args.validation.overall_score,
         is_valid: args.validation.is_valid,
         checks: {
-          control_coverage: args.validation.control_coverage.passed
-            ? "✓"
-            : "✗",
-          failure_handling: args.validation.failure_handling.passed
-            ? "✓"
-            : "✗",
+          control_coverage: args.validation.control_coverage.passed ? "✓" : "✗",
+          failure_handling: args.validation.failure_handling.passed ? "✓" : "✗",
           human_checkpoints: args.validation.human_checkpoints.passed
             ? "✓"
             : "✗",
           config_externalization: args.validation.config_externalization.passed
             ? "✓"
             : "✗",
-          implementation_feasibility:
-            args.validation.implementation_feasibility.passed ? "✓" : "✗",
+          implementation_feasibility: args.validation.implementation_feasibility
+            .passed
+            ? "✓"
+            : "✗",
           data_architecture: args.validation.data_architecture.passed
             ? "✓"
             : "✗",
-          dependency_check: args.validation.dependency_check.passed
-            ? "✓"
-            : "✗",
+          dependency_check: args.validation.dependency_check.passed ? "✓" : "✗",
         },
         critical_issues: criticals.length,
         warnings: warnings.length,
@@ -225,7 +239,7 @@ export async function handleValidateHarness(
       project_id: project.id,
       status: "awaiting_validation",
       message:
-        "请基于以下手册数据进行七维度质量验证，完成后将结果通过 validation 参数回传。",
+        "请基于以下手册数据进行八维度质量验证，完成后将结果通过 validation 参数回传。",
       validation_checklist: {
         control_coverage:
           "检查 control_matrix 是否覆盖了 redesigned_process（如有）或 implementation_phases 中的所有阶段",
@@ -241,6 +255,8 @@ export async function handleValidateHarness(
           "检查 data_architecture 是否包含主数据表（核心业务对象）、操作日志表、状态枚举定义",
         dependency_check:
           "检查 new_skills 的 dependencies 是否都在能力注册表或 existing_skills 中",
+        north_star_check:
+          "检查项目是否已定义北极星指标（has_north_star）。如果有，检查 markdown_content 是否包含'评估与进化'章节。没有北极星指标标记为 warning（不阻断，但建议补充）。有北极星但手册未包含评估章节标记为 warning。",
       },
       harness: {
         business_name: project.harness.business_name,
@@ -254,6 +270,13 @@ export async function handleValidateHarness(
         communication_checklist: project.harness.communication_checklist,
       },
       capability_registry_names: capabilities.map((c) => c.name),
+      has_north_star: !!project.north_star,
+      north_star_summary: project.north_star
+        ? {
+            primary_metric: project.north_star.primary_metric.name,
+            guardrails: project.north_star.guardrails.map((g) => g.name),
+          }
+        : null,
     },
     null,
     2,

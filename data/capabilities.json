@@ -329,5 +329,77 @@
       "多Agent协作",
       "交付审核"
     ]
+  },
+  {
+    "name": "probation-plan-generator",
+    "category": "试用期转正",
+    "description": "面试记录生成转正方案草案",
+    "input": "ai-native-recruiter, lark-doc",
+    "output": "面试记录解析, 方案模板填充",
+    "feishu_apis": [],
+    "reusable_patterns": [
+      "面试记录解析",
+      "方案模板填充"
+    ]
+  },
+  {
+    "name": "git-quality-analyzer",
+    "category": "试用期转正",
+    "description": "代码质量/复杂度/难度分析",
+    "input": "",
+    "output": "代码复杂度分析, 提交统计",
+    "feishu_apis": [],
+    "reusable_patterns": [
+      "代码复杂度分析",
+      "提交统计"
+    ]
+  },
+  {
+    "name": "probation-report-generator",
+    "category": "试用期转正",
+    "description": "多维数据聚合评估报告",
+    "input": "lark-base, git-quality-analyzer",
+    "output": "数据聚合, 趋势分析",
+    "feishu_apis": [],
+    "reusable_patterns": [
+      "数据聚合",
+      "趋势分析"
+    ]
+  },
+  {
+    "name": "self-perception-delta",
+    "category": "试用期转正",
+    "description": "简历自述vs客观数据delta分析",
+    "input": "probation-report-generator",
+    "output": "简历解析, 数据对比",
+    "feishu_apis": [],
+    "reusable_patterns": [
+      "简历解析",
+      "数据对比"
+    ]
+  },
+  {
+    "name": "growth-feedback-report",
+    "category": "试用期转正",
+    "description": "AI个人成长反馈报告",
+    "input": "probation-report-generator",
+    "output": "个性化报告, 成长曲线",
+    "feishu_apis": [],
+    "reusable_patterns": [
+      "个性化报告",
+      "成长曲线"
+    ]
+  },
+  {
+    "name": "interview-calibration",
+    "category": "试用期转正",
+    "description": "面试预测vs实际表现校准",
+    "input": "ai-native-recruiter, probation-report-generator",
+    "output": "相关性分析, 偏差识别",
+    "feishu_apis": [],
+    "reusable_patterns": [
+      "相关性分析",
+      "偏差识别"
+    ]
   }
 ]
