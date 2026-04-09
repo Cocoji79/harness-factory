@@ -131,8 +131,7 @@ const RULES: CompletenessRule[] = [
       (h.scheduled_tasks?.length ?? 0) > 0,
     question: {
       category: "automation",
-      question:
-        "哪些动作需要定时或事件触发？每个触发的失败降级策略是什么？",
+      question: "哪些动作需要定时或事件触发？每个触发的失败降级策略是什么？",
       why_asking:
         "定时任务是 Anya 的心跳，没有就不会主动动作。升级版 automation_rules 还支持 lookback 回溯错过的节点",
       blocking_field: "automation_rules",
@@ -243,11 +242,19 @@ export function buildGenerationState(
   const { score, missing_fields, pending_questions } =
     checkCompleteness(harness);
 
+  // 状态判定：
+  // 1. 完全无缺失 → complete
+  // 2. 只差 data_bindings → ready_to_provision（技术规格已全，只等真实资源）
+  // 3. 分数 >= 60 → needs_info（有部分字段待补）
+  // 4. 分数 < 60 → drafting（初始草稿）
   let status: GenerationState["status"];
-  if (score >= 90) {
-    status = missing_fields.includes("data_bindings")
-      ? "ready_to_provision"
-      : "complete";
+  if (missing_fields.length === 0) {
+    status = "complete";
+  } else if (
+    missing_fields.length === 1 &&
+    missing_fields[0] === "data_bindings"
+  ) {
+    status = "ready_to_provision";
   } else if (score >= 60) {
     status = "needs_info";
   } else {

@@ -33,6 +33,10 @@ import {
   handleGenerateHarness,
 } from "./tools/generate-harness.js";
 import {
+  ANSWER_QUESTIONS_SCHEMA,
+  handleAnswerQuestions,
+} from "./tools/answer-questions.js";
+import {
   ASSESS_INPUTS_SCHEMA,
   handleAssessInputs,
 } from "./tools/assess-inputs.js";
@@ -96,6 +100,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     ANALYZE_GAPS_SCHEMA,
     DEFINE_NORTH_STAR_SCHEMA,
     GENERATE_HARNESS_SCHEMA,
+    ANSWER_QUESTIONS_SCHEMA,
     VALIDATE_HARNESS_SCHEMA,
     HEALTH_CHECK_SCHEMA,
     LIST_CAPABILITIES_SCHEMA,
@@ -155,6 +160,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         result = await handleGenerateHarness(
           store,
           args as Parameters<typeof handleGenerateHarness>[1],
+        );
+        break;
+      case "answer_questions":
+        result = await handleAnswerQuestions(
+          store,
+          args as Parameters<typeof handleAnswerQuestions>[1],
         );
         break;
       case "validate_harness":
