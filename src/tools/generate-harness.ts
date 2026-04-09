@@ -1,5 +1,6 @@
 import type { Store } from "../store/store.js";
 import type { HarnessDocument } from "../types.js";
+import { buildGenerationState } from "./check-completeness.js";
 
 export const GENERATE_HARNESS_SCHEMA = {
   name: "generate_harness",
@@ -221,9 +222,17 @@ export async function handleGenerateHarness(
     );
   }
 
+  // Phase 1: 生成后立即做完整度检查，写入 generation_state
+  const generation_state = buildGenerationState(args.harness);
+
+  const harnessWithState: HarnessDocument = {
+    ...args.harness,
+    generation_state,
+  };
+
   const updated = {
     ...project,
-    harness: args.harness,
+    harness: harnessWithState,
     status: "generated" as const,
   };
   await store.saveProject(updated);
@@ -241,6 +250,28 @@ export async function handleGenerateHarness(
     });
   }
 
+  // Phase 1: 根据完整度生成 next_steps 引导
+  const nextSteps: string[] = [];
+  if (generation_state.status === "drafting") {
+    nextSteps.push(
+      `⚠️ 完整度仅 ${generation_state.completeness_score}/100，系统无法执行。请查看 pending_questions，逐一回答关键字段`,
+    );
+  } else if (generation_state.status === "needs_info") {
+    nextSteps.push(
+      `🟡 完整度 ${generation_state.completeness_score}/100，还有 ${generation_state.pending_questions.length} 个字段待补全。混合模式：requires_human=false 的可由 AI 先填，=true 的必须问真人`,
+    );
+  } else if (generation_state.status === "ready_to_provision") {
+    nextSteps.push(
+      `🟢 完整度 ${generation_state.completeness_score}/100，系统规格完整，仅差数据绑定。请让 Anya 创建 Bitable 后回填 data_bindings`,
+    );
+  } else {
+    nextSteps.push(
+      `✅ 完整度 ${generation_state.completeness_score}/100，可执行系统规格已就绪`,
+    );
+  }
+  nextSteps.push("调用 validate_harness 做质量自检");
+  nextSteps.push("通过后调用 export_handbook 导出");
+
   return JSON.stringify(
     {
       project_id: project.id,
@@ -256,6 +287,14 @@ export async function handleGenerateHarness(
         checklist_items: args.harness.communication_checklist.length,
         markdown_length: args.harness.markdown_content.length,
       },
+      // Phase 1 新增：完整度检查结果
+      generation_state: {
+        status: generation_state.status,
+        completeness_score: generation_state.completeness_score,
+        missing_fields: generation_state.missing_fields,
+        pending_questions_count: generation_state.pending_questions.length,
+        pending_questions: generation_state.pending_questions,
+      },
       new_skills_registered: args.harness.new_skills.map((s) => s.name),
       north_star: project.north_star
         ? {
@@ -268,10 +307,7 @@ export async function handleGenerateHarness(
             recommendation:
               "建议调用 define_north_star 定义评估指标，让手册自带进化机制",
           },
-      next_steps: [
-        "手册已生成，可以调用 validate_harness 做质量自检",
-        "通过后调用 export_handbook 导出，然后 Agent 按手册逐阶段执行",
-      ],
+      next_steps: nextSteps,
     },
     null,
     2,

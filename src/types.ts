@@ -204,6 +204,174 @@ export interface HarnessDocument {
   implementation_phases: Phase[];
   communication_checklist: ChecklistItem[];
   markdown_content: string;
+
+  // ── Phase 1 新增：可执行系统的核心字段（全部 optional，向后兼容）──
+
+  /** 状态机：定义系统有哪些状态、如何转移、底线触发规则 */
+  state_machine?: StateMachine;
+
+  /** 数据绑定：真实的 Bitable app_token 和 table_id 映射 */
+  data_bindings?: DataBindings;
+
+  /** 禁止事项：Anya 在任何情况下都不得做的事 */
+  forbidden_actions?: string[];
+
+  /** 错误处理与降级策略：L1-L5 五层自我修复 */
+  error_handling?: ErrorHandling;
+
+  /** 可填写模板：评估表、改进计划等结构化表单 */
+  templates?: FormTemplate[];
+
+  /** Skill 调用规则：control_matrix 中每个 action 绑定哪个 skill */
+  skill_bindings?: SkillBinding[];
+
+  /** 自动化规则：升级版 scheduled_tasks，支持 cron/event/state_entry 触发 + lookback */
+  automation_rules?: AutomationRule[];
+
+  /** 生成状态：追踪对话式收敛进度 */
+  generation_state?: GenerationState;
+
+  /** Pattern 来源：本次生成用了哪些从历史项目学到的 pattern */
+  pattern_source?: string[];
+}
+
+// ── 状态机 ──
+
+export interface StateMachine {
+  states: StateDefinition[];
+  transitions: Transition[];
+  trigger_rules: TriggerRule[];
+}
+
+export interface StateDefinition {
+  name: string;
+  description: string;
+  entry_actions: string[];
+  exit_conditions: string[];
+}
+
+export interface Transition {
+  from: string;
+  to: string;
+  condition: string;
+  triggered_by: "scheduled" | "human_decision" | "data_event";
+}
+
+export interface TriggerRule {
+  name: string;
+  condition: string;
+  action: string;
+}
+
+// ── 数据绑定 ──
+
+export interface DataBindings {
+  bitable_app_token?: string;
+  table_bindings: Record<string, string>;
+  document_templates?: Record<string, string>;
+}
+
+// ── 错误处理 ──
+
+export interface ErrorHandling {
+  layers: ErrorLayer[];
+}
+
+export interface ErrorLayer {
+  level:
+    | "L1_log"
+    | "L2_health_check"
+    | "L3_auto_repair"
+    | "L4_retrospection"
+    | "L5_monitoring";
+  mechanism: string;
+  trigger_condition: string;
+  recovery_action: string;
+}
+
+// ── 可填写模板 ──
+
+export interface FormTemplate {
+  name: string;
+  purpose: string;
+  fields: TemplateField[];
+  used_in_stages: string[];
+}
+
+export interface TemplateField {
+  name: string;
+  type: "text" | "number" | "select" | "multiselect" | "date" | "boolean";
+  required: boolean;
+  options?: string[];
+  help_text?: string;
+}
+
+// ── Skill 调用绑定 ──
+
+export interface SkillBinding {
+  action: string;
+  skill_name: string;
+  input_mapping?: string;
+  output_mapping?: string;
+}
+
+// ── 自动化规则 ──
+
+export interface AutomationRule {
+  name: string;
+  trigger: AutomationTrigger;
+  action_ref: string;
+  lookback_days?: number;
+  failure_policy: FailurePolicy;
+}
+
+export interface AutomationTrigger {
+  type: "cron" | "event" | "state_entry";
+  spec: string;
+}
+
+export interface FailurePolicy {
+  max_retries: number;
+  on_failure: "notify_hr" | "notify_manager" | "escalate" | "log_only";
+  escalation_hours?: number;
+}
+
+// ── 生成状态（对话式收敛） ──
+
+export interface GenerationState {
+  status: "drafting" | "needs_info" | "ready_to_provision" | "complete";
+  pending_questions: PendingQuestion[];
+  answered_questions: AnsweredQuestion[];
+  completeness_score: number;
+  missing_fields: string[];
+  last_checked_at: string;
+}
+
+export interface PendingQuestion {
+  id: string;
+  category:
+    | "state_machine"
+    | "data_binding"
+    | "template"
+    | "error_handling"
+    | "forbidden_actions"
+    | "skill_binding"
+    | "automation"
+    | "other";
+  question: string;
+  why_asking: string;
+  blocking_field: string;
+  requires_human: boolean;
+  suggested_answer?: string;
+  answer_source?: "ai_inferred" | "human_confirmed" | "pattern_library";
+  confidence?: "high" | "medium" | "low";
+}
+
+export interface AnsweredQuestion {
+  question_id: string;
+  answer: string;
+  answered_by: "ai" | "human";
+  answered_at: string;
 }
 
 export interface DataTable {
