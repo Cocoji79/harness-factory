@@ -45,6 +45,10 @@ import {
   handleValidateHarness,
 } from "./tools/validate-harness.js";
 import {
+  EVALUATE_HARNESS_SCHEMA,
+  handleEvaluateHarness,
+} from "./tools/evaluate-harness.js";
+import {
   HEALTH_CHECK_SCHEMA,
   handleHealthCheck,
 } from "./tools/health-check.js";
@@ -102,6 +106,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     GENERATE_HARNESS_SCHEMA,
     ANSWER_QUESTIONS_SCHEMA,
     VALIDATE_HARNESS_SCHEMA,
+    EVALUATE_HARNESS_SCHEMA,
     HEALTH_CHECK_SCHEMA,
     LIST_CAPABILITIES_SCHEMA,
     REGISTER_CAPABILITY_SCHEMA,
@@ -172,6 +177,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         result = await handleValidateHarness(
           store,
           args as Parameters<typeof handleValidateHarness>[1],
+        );
+        break;
+      case "evaluate_harness":
+        result = await handleEvaluateHarness(
+          store,
+          args as Parameters<typeof handleEvaluateHarness>[1],
         );
         break;
       case "health_check":
