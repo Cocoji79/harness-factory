@@ -6,6 +6,14 @@ export interface Project {
   created_at: string;
   updated_at: string;
   status: "gathering" | "analyzing" | "generated";
+  human_review_status?: "pending" | "approved" | "rejected";
+  human_review?: {
+    reviewed_at: string;
+    approved: boolean;
+    reviewer: string;
+    notes?: string;
+    modifications?: string[];
+  };
   vision?: VisionData;
   knowledge_bases: KnowledgeBaseData[];
   interviews: InterviewData[];
@@ -284,6 +292,7 @@ export interface StateDefinition {
   description: string;
   entry_actions: string[];
   exit_conditions: string[];
+  is_terminal?: boolean;
 }
 
 export interface Transition {
@@ -297,6 +306,7 @@ export interface TriggerRule {
   name: string;
   condition: string;
   action: string;
+  has_escalation_path?: boolean;
 }
 
 // ── 数据绑定 ──
@@ -432,6 +442,7 @@ export interface ControlMatrixEntry {
     | "human_confirmed"
     | "human_only";
   description: string;
+  is_judgment?: boolean;
 }
 
 export interface SkillRef {

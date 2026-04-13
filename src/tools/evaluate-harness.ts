@@ -129,11 +129,14 @@ function evaluateCompleteness(h: HarnessDocument): DimensionScore {
     const outgoing = sm.transitions.filter((t) => t.from === state.name);
     if (outgoing.length === 0) {
       terminalStates.add(state.name);
-      // Check if exit_conditions say "终态"
-      const isIntendedTerminal = state.exit_conditions.some(
-        (c) =>
-          c.includes("终态") || c.includes("无出口") || c.includes("terminal"),
-      );
+      const isIntendedTerminal =
+        state.is_terminal === true ||
+        state.exit_conditions.some(
+          (c) =>
+            c.includes("终态") ||
+            c.includes("无出口") ||
+            c.includes("terminal"),
+        );
       if (!isIntendedTerminal) {
         findings.push({
           dimension: dim,
@@ -440,7 +443,8 @@ function evaluateSafety(h: HarnessDocument): DimensionScore {
     const autoJudgmentActions = h.control_matrix.filter(
       (c) =>
         c.control_level === "full_auto" &&
-        (c.action.includes("评价") ||
+        (c.is_judgment === true ||
+          c.action.includes("评价") ||
           c.action.includes("判断") ||
           c.action.includes("决定") ||
           c.action.includes("Go/No-Go")),
@@ -461,6 +465,7 @@ function evaluateSafety(h: HarnessDocument): DimensionScore {
   if (h.state_machine?.trigger_rules) {
     const hasEscalation = h.state_machine.trigger_rules.some(
       (r) =>
+        r.has_escalation_path === true ||
         r.action.includes("通知") ||
         r.action.includes("面谈") ||
         r.action.includes("升级"),

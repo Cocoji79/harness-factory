@@ -176,6 +176,18 @@ export async function handleAnswerQuestions(
       continue;
     }
 
+    // HITL 硬阻断：requires_human=true 的问题不接受 AI 代答
+    const pendingQ = harness.generation_state?.pending_questions?.find(
+      (q) => q.id === answer.question_id,
+    );
+    if (pendingQ?.requires_human && answer.answered_by === "ai") {
+      rejectedAnswers.push({
+        question_id: answer.question_id,
+        reason: `此问题标记为 requires_human=true（${pendingQ.why_asking}），不接受 AI 代答。请让真人确认后以 answered_by="human" 重新提交`,
+      });
+      continue;
+    }
+
     if (answer.answer_value === null || answer.answer_value === undefined) {
       rejectedAnswers.push({
         question_id: answer.question_id,

@@ -53,6 +53,10 @@ import {
   handleLearnFromUpgrade,
 } from "./tools/learn-from-upgrade.js";
 import {
+  HUMAN_REVIEW_SCHEMA,
+  handleHumanReview,
+} from "./tools/human-review.js";
+import {
   HEALTH_CHECK_SCHEMA,
   handleHealthCheck,
 } from "./tools/health-check.js";
@@ -112,6 +116,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     VALIDATE_HARNESS_SCHEMA,
     EVALUATE_HARNESS_SCHEMA,
     LEARN_FROM_UPGRADE_SCHEMA,
+    HUMAN_REVIEW_SCHEMA,
     HEALTH_CHECK_SCHEMA,
     LIST_CAPABILITIES_SCHEMA,
     REGISTER_CAPABILITY_SCHEMA,
@@ -194,6 +199,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         result = await handleLearnFromUpgrade(
           store,
           args as Parameters<typeof handleLearnFromUpgrade>[1],
+        );
+        break;
+      case "human_review":
+        result = await handleHumanReview(
+          store,
+          args as Parameters<typeof handleHumanReview>[1],
         );
         break;
       case "health_check":
