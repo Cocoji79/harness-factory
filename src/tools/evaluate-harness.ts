@@ -574,9 +574,6 @@ function evaluateEvolvability(h: HarnessDocument): DimensionScore {
           a.includes("retrospect"),
       ),
     ) ?? false;
-  const hasNorthStarInPrinciples = h.principles.some(
-    (p) => p.includes("北极星") || p.includes("指标") || p.includes("评估"),
-  );
 
   if (hasFeedbackLoop) {
     findings.push({

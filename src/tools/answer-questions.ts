@@ -107,8 +107,7 @@ export const ANSWER_QUESTIONS_SCHEMA = {
           properties: {
             question_id: {
               type: "string",
-              description:
-                "对应 pending_question.id，格式为 q_<field_name>",
+              description: "对应 pending_question.id，格式为 q_<field_name>",
             },
             answer_value: {
               description:
@@ -117,8 +116,7 @@ export const ANSWER_QUESTIONS_SCHEMA = {
             answered_by: {
               type: "string",
               enum: ["ai", "human"],
-              description:
-                "答案来源：ai=AI 自动推断/填充；human=真人确认",
+              description: "答案来源：ai=AI 自动推断/填充；human=真人确认",
             },
             note: {
               type: "string",
@@ -196,11 +194,15 @@ export async function handleAnswerQuestions(
     });
   }
 
-  // 合并历史 answered_questions
-  const allAnswered: AnsweredQuestion[] = [
-    ...(harness.generation_state?.answered_questions ?? []),
-    ...appliedAnswers,
-  ];
+  // 合并历史 answered_questions，按 question_id 去重（保留最新）
+  const merged = new Map<string, AnsweredQuestion>();
+  for (const a of harness.generation_state?.answered_questions ?? []) {
+    merged.set(a.question_id, a);
+  }
+  for (const a of appliedAnswers) {
+    merged.set(a.question_id, a);
+  }
+  const allAnswered: AnsweredQuestion[] = [...merged.values()];
 
   // 重新计算完整度
   const newGenerationState = buildGenerationState({

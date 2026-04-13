@@ -241,7 +241,8 @@ export function checkCompleteness(harness: Partial<HarnessDocument>): {
     }
   }
 
-  const score = Math.round((earnedWeight / totalWeight) * 100);
+  const score =
+    totalWeight > 0 ? Math.round((earnedWeight / totalWeight) * 100) : 0;
 
   return {
     score,

@@ -62,7 +62,18 @@ export class Store {
     const path = join(this.projectsDir, `${id}.json`);
     try {
       const data = await readFile(path, "utf-8");
-      return JSON.parse(data) as Project;
+      try {
+        const project = JSON.parse(data) as Project;
+        if (!project.id || !project.status) {
+          throw new Error(`项目文件损坏，缺少必要字段 (id/status): ${path}`);
+        }
+        return project;
+      } catch (parseError) {
+        if (parseError instanceof SyntaxError) {
+          throw new Error(`项目文件损坏，无法解析 JSON: ${path}`);
+        }
+        throw parseError;
+      }
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code === "ENOENT") {
         throw new Error(`项目 ${id} 不存在`);
@@ -130,7 +141,11 @@ export class Store {
   private async readJsonArray<T>(path: string): Promise<T[]> {
     try {
       const data = await readFile(path, "utf-8");
-      return JSON.parse(data) as T[];
+      try {
+        return JSON.parse(data) as T[];
+      } catch {
+        throw new Error(`数据文件损坏，无法解析 JSON: ${path}`);
+      }
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code === "ENOENT") {
         return [];

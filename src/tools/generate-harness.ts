@@ -237,17 +237,22 @@ export async function handleGenerateHarness(
   };
   await store.saveProject(updated);
 
-  // Register new skills to capability registry (flywheel effect)
-  for (const skill of args.harness.new_skills) {
-    await store.addCapability({
+  // Register new skills to capability registry (flywheel effect) — batch write
+  const existing = await store.getCapabilities();
+  const existingNames = new Set(existing.map((c) => c.name));
+  const newCapabilities = args.harness.new_skills
+    .filter((skill) => !existingNames.has(skill.name))
+    .map((skill) => ({
       name: skill.name,
       category: project.business_name,
       description: skill.purpose,
       input: skill.dependencies?.join(", ") ?? "",
       output: skill.capabilities?.join(", ") ?? "",
-      feishu_apis: [],
+      feishu_apis: [] as string[],
       reusable_patterns: skill.capabilities ?? [],
-    });
+    }));
+  if (newCapabilities.length > 0) {
+    await store.saveCapabilities([...existing, ...newCapabilities]);
   }
 
   // Phase 1: 根据完整度生成 next_steps 引导

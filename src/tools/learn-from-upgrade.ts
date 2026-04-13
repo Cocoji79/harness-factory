@@ -359,6 +359,7 @@ export async function handleLearnFromUpgrade(
   }
 
   // Phase 1: 计算 diff，返回给 AI 分析
+  const isSyntheticBaseline = !args.original_harness;
   const before = args.original_harness ?? createMinimalHarness(project.harness);
   const after = args.upgraded_harness ?? project.harness;
 
@@ -368,8 +369,10 @@ export async function handleLearnFromUpgrade(
     {
       project_id: project.id,
       status: "diff_computed",
-      message:
-        "以下是 v1→v2 的结构化 diff。请分析每条变更，提取可复用的 pattern，然后通过 patterns 参数回传。",
+      synthetic_baseline: isSyntheticBaseline,
+      message: isSyntheticBaseline
+        ? "⚠️ 未提供 original_harness，使用合成基线（剥离所有 Phase 1 字段）。diff 中 Phase 1 字段全部显示为 added，这不代表真实升级——提取 pattern 时请忽略纯结构性新增，只关注内容层面的设计决策。"
+        : "以下是 v1→v2 的结构化 diff。请分析每条变更，提取可复用的 pattern，然后通过 patterns 参数回传。",
       diff,
       extraction_guide: {
         instructions: [
