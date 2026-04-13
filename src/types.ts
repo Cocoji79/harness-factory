@@ -671,6 +671,30 @@ export interface RejectedCandidate {
   better_as: "story" | "auxiliary" | "none";
 }
 
+// ── Harness Pattern（共创平台：从升级中学到的模式）──
+
+export interface HarnessPattern {
+  id: string;
+  name: string;
+  description: string;
+  source_project: string;
+  category:
+    | "state_machine"
+    | "safety"
+    | "error_handling"
+    | "template"
+    | "data_model"
+    | "automation"
+    | "process_design"
+    | "other";
+  pattern_type: "addition" | "refinement" | "restructure";
+  before_summary: string;
+  after_summary: string;
+  extracted_rule: string;
+  applicability: string;
+  learned_at: string;
+}
+
 // ── Capability Registry ──
 
 export interface Capability {

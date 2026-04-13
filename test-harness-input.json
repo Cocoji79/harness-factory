@@ -1,0 +1,115 @@
+{
+  "business_name": "试用期转正",
+  "principles": [
+    "状态可观测：每个试用期员工当前处于哪个评估阶段、最近一次评估结果、下一个评估节点时间，HR和主管随时可查",
+    "决策可审计：每次Go/No-Go决定都有完整依据链——客观数据报告+主管评价表+HR确认记录",
+    "失败可恢复：任何一个评估节点出问题不会导致整条线停摆，有降级方案和升级路径",
+    "控制权清晰：数据采集全自动、报告生成自动+人审、Go/No-Go决定人工确认、淘汰决定需HR+主管+高管三方共识",
+    "配置驱动：评估周期、评分维度、通过阈值、提醒频率、简历更新节点均可由HR在配置表中调整"
+  ],
+  "data_architecture": [
+    {
+      "name": "probation_record",
+      "purpose": "试用期主数据表——每个试用期员工一条记录",
+      "fields": [
+        {"name": "id", "type": "text", "description": "记录ID", "required": true},
+        {"name": "employee_name", "type": "text", "description": "员工姓名", "required": true},
+        {"name": "employee_id", "type": "text", "description": "飞书用户ID", "required": true},
+        {"name": "department", "type": "text", "description": "所属部门", "required": true},
+        {"name": "position", "type": "text", "description": "岗位", "required": true},
+        {"name": "manager_name", "type": "text", "description": "直属主管", "required": true},
+        {"name": "hire_date", "type": "date", "description": "入职日期", "required": true},
+        {"name": "probation_end_date", "type": "date", "description": "试用期截止日期", "required": true},
+        {"name": "status", "type": "enum", "description": "状态：plan_pending/month_1/month_3/month_6/passed/terminated", "required": true},
+        {"name": "probation_plan_url", "type": "url", "description": "转正方案飞书文档链接", "required": false},
+        {"name": "hire_purpose", "type": "text", "description": "招他解决什么问题", "required": true},
+        {"name": "interview_hypotheses", "type": "text", "description": "面试中待验证的假设", "required": true},
+        {"name": "north_star_current", "type": "number", "description": "当前月度自动化产出增长率", "required": false},
+        {"name": "final_decision", "type": "enum", "description": "最终决定：pass/terminate/extend", "required": false}
+      ]
+    },
+    {
+      "name": "evaluation_log",
+      "purpose": "评估日志表——每次评估的完整数据",
+      "fields": [
+        {"name": "id", "type": "text", "description": "日志ID", "required": true},
+        {"name": "probation_id", "type": "text", "description": "关联试用期记录", "required": true},
+        {"name": "checkpoint", "type": "enum", "description": "评估节点：month_1/month_3/month_6", "required": true},
+        {"name": "eval_date", "type": "date", "description": "评估日期", "required": true},
+        {"name": "objective_data_summary", "type": "text", "description": "客观数据汇总", "required": true},
+        {"name": "automation_output_score", "type": "number", "description": "自动化产出加权分", "required": false},
+        {"name": "manager_evaluation", "type": "text", "description": "主管结构化评价", "required": true},
+        {"name": "self_perception_delta", "type": "text", "description": "自我认知delta分析", "required": false},
+        {"name": "decision", "type": "enum", "description": "Go/No-Go/Extend", "required": true},
+        {"name": "decision_reason", "type": "text", "description": "决定理由", "required": true},
+        {"name": "decided_by", "type": "text", "description": "决定人", "required": true}
+      ]
+    },
+    {
+      "name": "probation_config",
+      "purpose": "配置表——所有可调参数集中管理",
+      "fields": [
+        {"name": "key", "type": "text", "description": "配置项", "required": true},
+        {"name": "value", "type": "text", "description": "配置值", "required": true},
+        {"name": "description", "type": "text", "description": "说明", "required": true}
+      ]
+    }
+  ],
+  "control_matrix": [
+    {"stage": "入职定方案", "action": "AI生成转正方案草案", "control_level": "full_auto", "description": "基于面试记录+岗位JD自动生成"},
+    {"stage": "入职定方案", "action": "主管审核修改方案", "control_level": "human_confirmed", "description": "主管确认方案内容"},
+    {"stage": "入职定方案", "action": "HR确认并存档", "control_level": "human_confirmed", "description": "HR确认方案合理性"},
+    {"stage": "持续数据采集", "action": "git/飞书/安雅数据采集", "control_level": "full_auto", "description": "自动采集多维数据"},
+    {"stage": "评估触发", "action": "到期自动提醒主管", "control_level": "full_auto", "description": "节点到期推送评估任务"},
+    {"stage": "评估触发", "action": "AI生成评估报告草案", "control_level": "auto_with_review", "description": "自动聚合数据生成报告"},
+    {"stage": "1/3/6月评估", "action": "主管填写结构化评价", "control_level": "human_confirmed", "description": "基于AI报告+个人观察填表"},
+    {"stage": "1/3/6月评估", "action": "Go/No-Go决定", "control_level": "human_confirmed", "description": "主管+HR共同决定"},
+    {"stage": "3/6月评估", "action": "邀请员工更新简历", "control_level": "full_auto", "description": "自动发送简历更新邀请"},
+    {"stage": "3/6月评估", "action": "自我认知delta分析", "control_level": "auto_with_review", "description": "对比简历自述和客观数据"},
+    {"stage": "3月评估", "action": "HR一对一沟通", "control_level": "human_only", "description": "基于delta分析做面谈"},
+    {"stage": "6月转正", "action": "薪资调整建议", "control_level": "human_confirmed", "description": "超预期的加薪"},
+    {"stage": "6月转正", "action": "转正仪式", "control_level": "human_only", "description": "纪念品+全员公示"},
+    {"stage": "进化闭环", "action": "面试校准分析", "control_level": "auto_with_review", "description": "面试预测vs实际表现"}
+  ],
+  "existing_skills": [
+    {"name": "lark-base", "purpose": "多维表格操作", "pipeline_stage": "全流程数据存储"},
+    {"name": "lark-doc", "purpose": "飞书文档生成", "pipeline_stage": "入职定方案+评估报告"},
+    {"name": "lark-calendar", "purpose": "日历提醒", "pipeline_stage": "评估触发"},
+    {"name": "lark-im", "purpose": "消息推送", "pipeline_stage": "全流程通知"},
+    {"name": "lark-task", "purpose": "待办管理", "pipeline_stage": "评估任务分配"},
+    {"name": "ai-native-recruiter", "purpose": "面试评估解析", "pipeline_stage": "入职定方案"}
+  ],
+  "new_skills": [
+    {"name": "probation-plan-generator", "purpose": "面试记录生成转正方案草案", "complexity": "medium", "capabilities": ["面试记录解析", "方案模板填充"], "dependencies": ["ai-native-recruiter", "lark-doc"]},
+    {"name": "git-quality-analyzer", "purpose": "代码质量/复杂度/难度分析", "complexity": "medium", "capabilities": ["代码复杂度分析", "提交统计"], "dependencies": []},
+    {"name": "probation-report-generator", "purpose": "多维数据聚合评估报告", "complexity": "medium", "capabilities": ["数据聚合", "趋势分析"], "dependencies": ["lark-base", "git-quality-analyzer"]},
+    {"name": "self-perception-delta", "purpose": "简历自述vs客观数据delta分析", "complexity": "medium", "capabilities": ["简历解析", "数据对比"], "dependencies": ["probation-report-generator"]},
+    {"name": "growth-feedback-report", "purpose": "AI个人成长反馈报告", "complexity": "high", "capabilities": ["个性化报告", "成长曲线"], "dependencies": ["probation-report-generator"]},
+    {"name": "interview-calibration", "purpose": "面试预测vs实际表现校准", "complexity": "high", "capabilities": ["相关性分析", "偏差识别"], "dependencies": ["ai-native-recruiter", "probation-report-generator"]}
+  ],
+  "scheduled_tasks": [
+    {"name": "评估节点提醒", "frequency": "每日检查", "description": "命中1/3/6个月节点时向主管推送评估任务"},
+    {"name": "数据自动采集", "frequency": "每周", "description": "采集git/飞书/安雅数据写入evaluation_log"},
+    {"name": "北极星指标月报", "frequency": "每月初", "description": "统计月度自动化产出增长率"},
+    {"name": "简历更新邀请", "frequency": "入职+3/6个月触发", "description": "向员工发送简历更新邀请"}
+  ],
+  "implementation_phases": [
+    {"number": 1, "name": "基础设施搭建", "self_driven_tasks": ["创建probation_record表", "创建evaluation_log表", "创建probation_config表", "配置评估节点提醒定时任务"], "needs_confirmation": ["表结构是否满足需求", "配置初始值是否合理"], "completion_criteria": "三张表创建完成，定时任务可触发"},
+    {"number": 2, "name": "入职定方案流程", "self_driven_tasks": ["开发probation-plan-generator", "对接面试记录", "生成飞书文档模板"], "needs_confirmation": ["方案模板评估维度是否合理", "方案是否同步给新员工"], "completion_criteria": "输入面试记录后自动出方案草案"},
+    {"number": 3, "name": "数据采集管道", "self_driven_tasks": ["开发git-quality-analyzer", "对接飞书/安雅数据", "配置每周采集"], "needs_confirmation": ["数据采集隐私边界", "代码质量评估维度"], "completion_criteria": "每周自动采集数据可查"},
+    {"number": 4, "name": "评估报告与决策", "self_driven_tasks": ["开发probation-report-generator", "开发self-perception-delta", "搭建完整评估流程"], "needs_confirmation": ["报告格式是否满足主管需要", "Go/No-Go是否需高管审批"], "completion_criteria": "节点到期自动报告+主管填表+决定记录"},
+    {"number": 5, "name": "成长反馈与进化闭环", "self_driven_tasks": ["开发growth-feedback-report", "开发interview-calibration", "搭建北极星月报"], "needs_confirmation": ["成长反馈语气是否合适", "面试校准启动案例数"], "completion_criteria": "员工收到成长反馈，校准报告可生成"}
+  ],
+  "communication_checklist": [
+    {"item": "与马总确认转正流程方案和淘汰机制", "priority": "before_start", "status": "pending"},
+    {"item": "与各部门主管沟通新评估流程", "priority": "before_start", "status": "pending"},
+    {"item": "确认转正方案是否同步给新员工", "priority": "before_start", "status": "pending"},
+    {"item": "确认数据采集隐私边界", "priority": "before_start", "status": "pending"},
+    {"item": "确认1个月No-Go退出流程（合规）", "priority": "before_start", "status": "pending"},
+    {"item": "Phase 1完成后向川总/马总演示", "priority": "during", "status": "pending"},
+    {"item": "第一个真实案例跑通后收集反馈", "priority": "during", "status": "pending"},
+    {"item": "积累5个案例后运行面试校准", "priority": "after", "status": "pending"},
+    {"item": "积累10个案例后校验北极星代理指标有效性", "priority": "after", "status": "pending"}
+  ],
+  "markdown_content": "# 试用期转正 Anya 执行手册\n\n## 一、设计原则\n\n本手册遵循 Harness Engineering 五约束：\n\n| 约束 | 在本流程中的体现 |\n|------|----------------|\n| 状态可观测 | 每个试用期员工的当前阶段、评估结果随时可查 |\n| 决策可审计 | 每次Go/No-Go都有客观数据+主管评价+HR确认 |\n| 失败可恢复 | 主管未响应7天升级提醒，14天升级马总 |\n| 控制权清晰 | 数据采集全自动，Go/No-Go人工确认 |\n| 配置驱动 | 评估周期、阈值、提醒频率HR可自行调整 |\n\n## 二、核心理念\n\n培养优先，淘汰兜底。试用期不是考试，是孵化器。目标是创造环境让超级个体涌现。\n\n## 三、流程总览\n\n入职(定方案) -> 持续数据采集 -> 1月评估(Go/No-Go) -> 3月评估+简历自更新(Go/No-Go) -> 6月转正(Pass/Terminate)\n\n## 四、评估与进化\n\n### 北极星指标：月度自动化产出增长率\n\n定义：本月新增/改进的自动化产出物数量，按复杂度加权（使用=1x，组合=2x，创建=3x）\n\n产出物：git提交、安雅工作流、飞书自动化规则\n\n代理指标——真正测的是能不能成为超级个体\n\n### 护栏\n\n| 护栏 | 红线 | 防止什么 |\n|------|------|----------|\n| 业务采纳率 | >=50% | 刷量 |\n| 评估完成率 | 100% | 忽略评估 |\n\n### 观察指标\n\n- 自我认知delta：简历自述vs客观数据偏差\n- 问题复杂度升级比：解决问题的难度趋势\n\n### 迭代规则\n\n1. 主指标连续两月恶化则回滚\n2. 护栏触及红线立即暂停\n3. 每5-10个转正案例校验代理指标有效性\n\n### 故事素材\n\n- 向马总：以前评估靠记忆，现在AI自动触发零遗忘\n- 向技术主管：以前只看代码数量，现在分析质量和成长曲线\n- 向川总：好的培养机制让员工进化速度远比多拿钱划算"
+}

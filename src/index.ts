@@ -49,6 +49,10 @@ import {
   handleEvaluateHarness,
 } from "./tools/evaluate-harness.js";
 import {
+  LEARN_FROM_UPGRADE_SCHEMA,
+  handleLearnFromUpgrade,
+} from "./tools/learn-from-upgrade.js";
+import {
   HEALTH_CHECK_SCHEMA,
   handleHealthCheck,
 } from "./tools/health-check.js";
@@ -83,7 +87,7 @@ const store = new Store(DATA_DIR);
 const server = new Server(
   {
     name: "harness-factory",
-    version: "0.4.0",
+    version: "0.5.0",
   },
   {
     capabilities: {
@@ -107,6 +111,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     ANSWER_QUESTIONS_SCHEMA,
     VALIDATE_HARNESS_SCHEMA,
     EVALUATE_HARNESS_SCHEMA,
+    LEARN_FROM_UPGRADE_SCHEMA,
     HEALTH_CHECK_SCHEMA,
     LIST_CAPABILITIES_SCHEMA,
     REGISTER_CAPABILITY_SCHEMA,
@@ -183,6 +188,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         result = await handleEvaluateHarness(
           store,
           args as Parameters<typeof handleEvaluateHarness>[1],
+        );
+        break;
+      case "learn_from_upgrade":
+        result = await handleLearnFromUpgrade(
+          store,
+          args as Parameters<typeof handleLearnFromUpgrade>[1],
         );
         break;
       case "health_check":

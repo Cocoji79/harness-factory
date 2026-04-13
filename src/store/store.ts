@@ -1,7 +1,7 @@
 import { readFile, writeFile, mkdir, readdir, unlink } from "node:fs/promises";
 import { join } from "node:path";
 import { randomUUID } from "node:crypto";
-import type { Project, Capability } from "../types.js";
+import type { Project, Capability, HarnessPattern } from "../types.js";
 
 /**
  * File-based storage layer for projects and capabilities.
@@ -14,11 +14,13 @@ export class Store {
   private readonly dataDir: string;
   private readonly projectsDir: string;
   private readonly registryPath: string;
+  private readonly patternsPath: string;
 
   constructor(dataDir: string) {
     this.dataDir = dataDir;
     this.projectsDir = join(dataDir, "projects");
     this.registryPath = join(dataDir, "capabilities.json");
+    this.patternsPath = join(dataDir, "patterns.json");
   }
 
   async init(): Promise<void> {
@@ -163,6 +165,38 @@ export class Store {
     if (filtered.length === capabilities.length) return false;
     await this.saveCapabilities(filtered);
     return true;
+  }
+
+  // ── Pattern Library ──
+
+  async getPatterns(): Promise<HarnessPattern[]> {
+    try {
+      const data = await readFile(this.patternsPath, "utf-8");
+      return JSON.parse(data) as HarnessPattern[];
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+        return [];
+      }
+      throw error;
+    }
+  }
+
+  async savePatterns(patterns: HarnessPattern[]): Promise<void> {
+    await writeFile(
+      this.patternsPath,
+      JSON.stringify(patterns, null, 2),
+      "utf-8",
+    );
+  }
+
+  async addPattern(pattern: HarnessPattern): Promise<void> {
+    const patterns = await this.getPatterns();
+    const existing = patterns.findIndex((p) => p.id === pattern.id);
+    const updated =
+      existing >= 0
+        ? patterns.map((p, i) => (i === existing ? pattern : p))
+        : [...patterns, pattern];
+    await this.savePatterns(updated);
   }
 
   async searchCapabilities(query: string): Promise<Capability[]> {
