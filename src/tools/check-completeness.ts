@@ -124,8 +124,25 @@ const RULES: CompletenessRule[] = [
     },
   },
   {
-    field: "automation_rules",
+    field: "builtin_evaluator",
     weight: 8,
+    check: (h) => (h.builtin_evaluator?.checks?.length ?? 0) >= 2,
+    question: {
+      category: "other",
+      question:
+        "这个系统需要哪些独立的质量检查？Evaluator 要检查什么？每项检查的硬性及格线是什么？不通过时怎么办？",
+      why_asking:
+        "没有内建 Evaluator 的系统无法自我纠错。Generator（做事的 Anya）和 Evaluator（检查的 Anya）必须分离——同一个 agent 干活又评价自己的活会自我宽容",
+      blocking_field: "builtin_evaluator",
+      requires_human: true,
+      suggested_answer:
+        "参考：① 一致性检查（主管评价 vs 客观数据，偏差超过阈值→告警 HR）② 模板完整性（主管填表有空项或维度单一→要求补充）③ 流程合规（跳过节点或超时未处理→阻断并升级）",
+      confidence: "medium",
+    },
+  },
+  {
+    field: "automation_rules",
+    weight: 6,
     check: (h) =>
       (h.automation_rules?.length ?? 0) > 0 ||
       (h.scheduled_tasks?.length ?? 0) > 0,

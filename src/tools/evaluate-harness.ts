@@ -11,17 +11,23 @@ import type { HarnessDocument } from "../types.js";
  * - validate = 结构校验（字段有没有？格式对不对？）
  * - evaluate = 质量评估（内容好不好？能不能跑？会不会出事？）
  *
- * 四个评分维度（每个 0-25 分，总分 0-100）：
+ * 五个评分维度（每个 0-20 分，总分 0-100）：
  * 1. 流程完整性 — 所有路径覆盖？有没有死路？
  * 2. 可执行性 — Anya 拿到能直接跑？
  * 3. 安全性 — 人机边界清晰？forbidden_actions 没有被绕过？
  * 4. 可演化性 — 配置驱动？有反馈闭环？
+ * 5. 自检能力 — 系统有内建 Evaluator 吗？Generator 和 Evaluator 分离了吗？
  */
 
 // ── Types ──
 
 interface EvalFinding {
-  dimension: "completeness" | "executability" | "safety" | "evolvability";
+  dimension:
+    | "completeness"
+    | "executability"
+    | "safety"
+    | "evolvability"
+    | "self_check";
   severity: "pass" | "warning" | "fail";
   criterion: string;
   finding: string;
@@ -43,11 +49,11 @@ interface EvaluationResult {
   summary: string;
 }
 
-// ── Dimension 1: Process Completeness (0-25) ──
+// ── Dimension 1: Process Completeness (0-20) ──
 
 function evaluateCompleteness(h: HarnessDocument): DimensionScore {
   const findings: EvalFinding[] = [];
-  let score = 25;
+  let score = 20;
   const dim = "completeness" as const;
 
   const sm = h.state_machine;
@@ -58,7 +64,7 @@ function evaluateCompleteness(h: HarnessDocument): DimensionScore {
       criterion: "状态机存在",
       finding: "没有定义状态机，无法评估流程完整性",
     });
-    return { name: "流程完整性", score: 0, max: 25, findings };
+    return { name: "流程完整性", score: 0, max: 20, findings };
   }
 
   const stateNames = new Set(sm.states.map((s) => s.name));
@@ -165,8 +171,7 @@ function evaluateCompleteness(h: HarnessDocument): DimensionScore {
         criterion: "control_matrix 与 state_machine 一致性",
         finding:
           "control_matrix 的 stage 名称与 state_machine 的 state 名称完全不匹配",
-        recommendation:
-          "统一命名，或建立 stage → state 的映射关系",
+        recommendation: "统一命名，或建立 stage → state 的映射关系",
       });
       score -= 2;
     }
@@ -181,23 +186,21 @@ function evaluateCompleteness(h: HarnessDocument): DimensionScore {
     });
   }
 
-  return { name: "流程完整性", score: Math.max(0, score), max: 25, findings };
+  return { name: "流程完整性", score: Math.max(0, score), max: 20, findings };
 }
 
-// ── Dimension 2: Executability (0-25) ──
+// ── Dimension 2: Executability (0-20) ──
 
 function evaluateExecutability(h: HarnessDocument): DimensionScore {
   const findings: EvalFinding[] = [];
-  let score = 25;
+  let score = 20;
   const dim = "executability" as const;
 
   const sm = h.state_machine;
 
   // Check: every state has non-empty entry_actions
   if (sm) {
-    const emptyActions = sm.states.filter(
-      (s) => s.entry_actions.length === 0,
-    );
+    const emptyActions = sm.states.filter((s) => s.entry_actions.length === 0);
     if (emptyActions.length > 0) {
       findings.push({
         dimension: dim,
@@ -271,8 +274,7 @@ function evaluateExecutability(h: HarnessDocument): DimensionScore {
       severity: "fail",
       criterion: "数据绑定真实资源",
       finding: "data_bindings 为空，系统运行时无法读写数据",
-      recommendation:
-        "让 Anya 创建 Bitable 后回填 app_token 和 table_id",
+      recommendation: "让 Anya 创建 Bitable 后回填 app_token 和 table_id",
     });
     score -= 5;
   }
@@ -334,14 +336,14 @@ function evaluateExecutability(h: HarnessDocument): DimensionScore {
     }
   }
 
-  return { name: "可执行性", score: Math.max(0, score), max: 25, findings };
+  return { name: "可执行性", score: Math.max(0, score), max: 20, findings };
 }
 
-// ── Dimension 3: Safety (0-25) ──
+// ── Dimension 3: Safety (0-20) ──
 
 function evaluateSafety(h: HarnessDocument): DimensionScore {
   const findings: EvalFinding[] = [];
-  let score = 25;
+  let score = 20;
   const dim = "safety" as const;
 
   // Check: forbidden_actions exist and are sufficient
@@ -351,10 +353,9 @@ function evaluateSafety(h: HarnessDocument): DimensionScore {
       severity: "fail",
       criterion: "禁止事项已定义",
       finding: "没有定义任何 forbidden_actions",
-      recommendation:
-        "AI 系统必须有明确的负向边界。至少列出3条不可逾越的底线",
+      recommendation: "AI 系统必须有明确的负向边界。至少列出3条不可逾越的底线",
     });
-    score -= 8;
+    score -= 6;
   } else if (h.forbidden_actions.length < 3) {
     findings.push({
       dimension: dim,
@@ -374,7 +375,8 @@ function evaluateSafety(h: HarnessDocument): DimensionScore {
 
   // Check: human_confirmed exists on critical paths
   const humanConfirmedCount = h.control_matrix.filter(
-    (c) => c.control_level === "human_confirmed" || c.control_level === "human_only",
+    (c) =>
+      c.control_level === "human_confirmed" || c.control_level === "human_only",
   ).length;
   const fullAutoCount = h.control_matrix.filter(
     (c) => c.control_level === "full_auto",
@@ -388,7 +390,7 @@ function evaluateSafety(h: HarnessDocument): DimensionScore {
       finding: "control_matrix 中没有任何 human_confirmed 或 human_only 节点",
       recommendation: "纯自动化流程不可信。关键决策点必须有人工确认",
     });
-    score -= 6;
+    score -= 5;
   } else {
     const ratio = humanConfirmedCount / h.control_matrix.length;
     findings.push({
@@ -457,20 +459,21 @@ function evaluateSafety(h: HarnessDocument): DimensionScore {
         severity: "warning",
         criterion: "底线触发有升级路径",
         finding: "trigger_rules 中没有明确的升级路径（通知谁？面谈谁？）",
-        recommendation: "底线触发后应有明确的升级链：通知谁 → 面谈谁 → 最终决策权",
+        recommendation:
+          "底线触发后应有明确的升级链：通知谁 → 面谈谁 → 最终决策权",
       });
       score -= 2;
     }
   }
 
-  return { name: "安全性", score: Math.max(0, score), max: 25, findings };
+  return { name: "安全性", score: Math.max(0, score), max: 20, findings };
 }
 
-// ── Dimension 4: Evolvability (0-25) ──
+// ── Dimension 4: Evolvability (0-20) ──
 
 function evaluateEvolvability(h: HarnessDocument): DimensionScore {
   const findings: EvalFinding[] = [];
-  let score = 25;
+  let score = 20;
   const dim = "evolvability" as const;
 
   // Check: error_handling layers
@@ -545,15 +548,14 @@ function evaluateEvolvability(h: HarnessDocument): DimensionScore {
 
   // Check: feedback loop exists
   const hasFeedbackLoop =
-    h.state_machine?.states.some(
-      (s) =>
-        s.entry_actions.some(
-          (a) =>
-            a.includes("校准") ||
-            a.includes("反馈") ||
-            a.includes("calibrat") ||
-            a.includes("retrospect"),
-        ),
+    h.state_machine?.states.some((s) =>
+      s.entry_actions.some(
+        (a) =>
+          a.includes("校准") ||
+          a.includes("反馈") ||
+          a.includes("calibrat") ||
+          a.includes("retrospect"),
+      ),
     ) ?? false;
   const hasNorthStarInPrinciples = h.principles.some(
     (p) => p.includes("北极星") || p.includes("指标") || p.includes("评估"),
@@ -612,7 +614,115 @@ function evaluateEvolvability(h: HarnessDocument): DimensionScore {
     }
   }
 
-  return { name: "可演化性", score: Math.max(0, score), max: 25, findings };
+  return { name: "可演化性", score: Math.max(0, score), max: 20, findings };
+}
+
+// ── Dimension 5: Self-Check Capability (0-20) ──
+
+function evaluateSelfCheck(h: HarnessDocument): DimensionScore {
+  const findings: EvalFinding[] = [];
+  let score = 20;
+  const dim = "self_check" as const;
+
+  const ev = h.builtin_evaluator;
+
+  // Check: builtin_evaluator exists
+  if (!ev || ev.checks.length === 0) {
+    findings.push({
+      dimension: dim,
+      severity: "fail",
+      criterion: "内建 Evaluator 存在",
+      finding:
+        "系统没有内建 Evaluator。Generator（做事的 Anya）和 Evaluator（检查的 Anya）没有分离",
+      recommendation:
+        "定义 builtin_evaluator，包含至少 2 项独立质量检查，每项有硬性及格线。" +
+        "Evaluator 必须在独立上下文中运行，防止 Generator 自我宽容",
+    });
+    return { name: "自检能力", score: 0, max: 20, findings };
+  }
+
+  // Check: at least 2 checks defined
+  if (ev.checks.length < 2) {
+    findings.push({
+      dimension: dim,
+      severity: "warning",
+      criterion: "检查项充分",
+      finding: `仅 ${ev.checks.length} 项检查，建议至少 2 项覆盖不同维度`,
+    });
+    score -= 4;
+  } else {
+    findings.push({
+      dimension: dim,
+      severity: "pass",
+      criterion: "检查项充分",
+      finding: `${ev.checks.length} 项质量检查已定义`,
+    });
+  }
+
+  // Check: isolation_required is true
+  if (!ev.isolation_required) {
+    findings.push({
+      dimension: dim,
+      severity: "fail",
+      criterion: "Generator-Evaluator 隔离",
+      finding: "isolation_required 为 false。同一上下文中做事又评价会自我宽容",
+      recommendation:
+        "设置 isolation_required: true，确保 Evaluator 在独立对话上下文中运行",
+    });
+    score -= 6;
+  } else {
+    findings.push({
+      dimension: dim,
+      severity: "pass",
+      criterion: "Generator-Evaluator 隔离",
+      finding:
+        "isolation_required: true — Generator 和 Evaluator 在独立上下文中运行",
+    });
+  }
+
+  // Check: each check has a hard_threshold
+  const noThreshold = ev.checks.filter(
+    (c) => !c.hard_threshold || c.hard_threshold.trim() === "",
+  );
+  if (noThreshold.length > 0) {
+    findings.push({
+      dimension: dim,
+      severity: "warning",
+      criterion: "硬性及格线",
+      finding: `${noThreshold.length} 项检查缺少 hard_threshold`,
+      recommendation:
+        "没有硬性及格线的检查形同虚设。每项检查都需要明确的通过/不通过标准",
+    });
+    score -= 3;
+  }
+
+  // Check: at least one check has on_fail = "block"
+  const hasBlocking = ev.checks.some((c) => c.on_fail === "block");
+  if (!hasBlocking) {
+    findings.push({
+      dimension: dim,
+      severity: "warning",
+      criterion: "有阻断能力",
+      finding: "没有任何检查项设置 on_fail='block'",
+      recommendation:
+        "至少有一项关键检查能阻断流程。纯 warn 的 Evaluator 没有牙齿",
+    });
+    score -= 3;
+  }
+
+  // Check: escalation defined
+  if (!ev.escalation || ev.escalation.trim() === "") {
+    findings.push({
+      dimension: dim,
+      severity: "warning",
+      criterion: "升级路径",
+      finding: "Evaluator 没有定义不通过时的升级路径",
+      recommendation: "定义 Evaluator 发现问题后通知谁、怎么升级",
+    });
+    score -= 2;
+  }
+
+  return { name: "自检能力", score: Math.max(0, score), max: 20, findings };
 }
 
 // ── Main Evaluator ──
@@ -623,6 +733,7 @@ function evaluateHarness(h: HarnessDocument): EvaluationResult {
     evaluateExecutability(h),
     evaluateSafety(h),
     evaluateEvolvability(h),
+    evaluateSelfCheck(h),
   ];
 
   const overall_score = dimensions.reduce((sum, d) => sum + d.score, 0);
@@ -653,12 +764,13 @@ export const EVALUATE_HARNESS_SCHEMA = {
 与 validate_harness（结构校验）不同，evaluate_harness 模拟走状态机、交叉验证字段、
 检查人机边界一致性，输出具体的改进建议。
 
-四个评分维度（每个 0-25 分，总分 0-100）：
+五个评分维度（每个 0-20 分，总分 0-100）：
 
 1. **流程完整性** — 所有状态可达？有没有死路？transition 引用有效？trigger_rules 完整？
 2. **可执行性** — entry_actions 非空？模板有字段？data_bindings 有真实 token？skill 绑定覆盖？
 3. **安全性** — forbidden_actions 充分？人工确认节点够？与 control_matrix 无冲突？
 4. **可演化性** — 错误处理分层？配置驱动？有反馈闭环？通信清单完成？
+5. **自检能力** — 系统有内建 Evaluator？Generator-Evaluator 隔离？检查项有硬性及格线？有阻断能力？
 
 每条发现附带具体 criterion、finding、recommendation。
 Generator（调用方）可根据 Evaluator 的反馈调用 answer_questions 迭代改进。

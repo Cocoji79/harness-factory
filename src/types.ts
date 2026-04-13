@@ -233,6 +233,35 @@ export interface HarnessDocument {
 
   /** Pattern 来源：本次生成用了哪些从历史项目学到的 pattern */
   pattern_source?: string[];
+
+  /** 系统内建 Evaluator：分形递归——产品层也用三角架构 */
+  builtin_evaluator?: BuiltinEvaluator;
+}
+
+// ── 系统内建 Evaluator（产品层的质量检查机制）──
+
+export interface BuiltinEvaluator {
+  /** Evaluator 检查项列表，每项有硬性阈值 */
+  checks: EvaluatorCheck[];
+  /** Evaluator 是否必须在独立上下文中运行（防止 Generator 自我宽容） */
+  isolation_required: boolean;
+  /** 检查频率 */
+  frequency: "per_action" | "per_stage" | "per_milestone";
+  /** 不通过时的升级路径 */
+  escalation: string;
+}
+
+export interface EvaluatorCheck {
+  /** 检查名称 */
+  name: string;
+  /** 属于哪个质量维度 */
+  dimension: string;
+  /** 检查逻辑：Evaluator 要检查什么 */
+  check_logic: string;
+  /** 硬性及格线 */
+  hard_threshold: string;
+  /** 不通过时怎么办 */
+  on_fail: "block" | "warn_and_continue" | "escalate_to_human";
 }
 
 // ── 状态机 ──
