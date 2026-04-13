@@ -1,0 +1,41 @@
+[
+  {
+    "id": "47c6fdd7-a1e",
+    "source_project": "29052344-6f2",
+    "learned_at": "2026-04-13T09:48:33.701Z",
+    "name": "双层筛选 + 无信息分流",
+    "description": "粗筛用便宜模型排除，精筛用强模型判断；缺必需信息走补信息分支而非直接淘汰",
+    "category": "process_design",
+    "pattern_type": "restructure",
+    "before_summary": "单层筛选，一刀切通过/淘汰。缺信息的候选人直接被淘汰",
+    "after_summary": "粗筛（Haiku + 五维120分 + 阈值80）→ 精筛（Opus + 五维120分 + 阈值75）。无GitHub走补信息分支再回主流程",
+    "extracted_rule": "粗筛用便宜模型做排除（高throughput低成本），精筛用强模型做判断（高准确率）；缺信息走补信息分支而非直接淘汰——信息缺失不等于质量不足",
+    "applicability": "任何需要从大量输入中筛选少量高质量结果的场景（合同审查、工单分拣、内容审核、简历筛选）"
+  },
+  {
+    "id": "2a279922-1f4",
+    "source_project": "29052344-6f2",
+    "learned_at": "2026-04-13T09:48:33.701Z",
+    "name": "forbidden_actions 三件套",
+    "description": "每条底线必须配触发后果和实现入口。只有声明没有牙齿的底线等于没有底线",
+    "category": "safety",
+    "pattern_type": "refinement",
+    "before_summary": "forbidden_actions 只是一个 string[] 列表，声明了不能做什么但没有后续",
+    "after_summary": "每条底线配三层保障：底线声明 + 触发后果（停止+告警+交人）+ 实现入口（SKILL声明+代码校验+health_check监控）",
+    "extracted_rule": "forbidden_actions 必须回答三个问题：(1) 不能做什么？(2) 违反了怎么办？(3) 代码怎么拦？没有后果的底线等于没有底线，没有代码拦截的后果等于没有后果",
+    "applicability": "所有 harness 项目——任何包含 AI 自动执行环节的系统"
+  },
+  {
+    "id": "59550503-d0f",
+    "source_project": "29052344-6f2",
+    "learned_at": "2026-04-13T09:48:33.701Z",
+    "name": "门禁阈值数据校准循环",
+    "description": "初始阈值拍脑袋设定，跑完首批真实数据后用 health_check 反推合理区间",
+    "category": "automation",
+    "pattern_type": "refinement",
+    "before_summary": "门禁阈值拍脑袋设定（如通过率10-50%），上线后发现实际偏差大",
+    "after_summary": "初始阈值标注[待校准] → 跑真实数据 → 发现实际通过率14% → health_check 反推校准为40-80%",
+    "extracted_rule": "初始阈值必须标注[待校准]；跑完首批数据（建议N>=20）后用 health_check 的实际分布反推合理区间；校准后的阈值标注[已校准@日期+样本量]",
+    "applicability": "所有有量化门禁的 harness 项目"
+  }
+]

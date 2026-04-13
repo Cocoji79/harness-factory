@@ -72,7 +72,13 @@ const RULES: CompletenessRule[] = [
       blocking_field: "forbidden_actions",
       requires_human: true,
       suggested_answer:
-        "常见底线参考：① 不得替主管/决策者做出评价判断 ② 不得在没有人工确认的情况下通知当事人关键结果 ③ 不得跳过任何审核节点 ④ 不得修改已填写的关键记录",
+        "每条底线必须是三件套（Pattern: forbidden_actions 三件套）：\n" +
+        "① 底线声明：不得做什么\n" +
+        "② 触发后果：违反后停止动作 → 向谁告警 → 交给谁处理\n" +
+        "③ 实现入口：哪个 Skill 的代码做校验 + health_check 监控哪个维度\n\n" +
+        "示例：\n" +
+        "- 不得替主管做出最终评价判断 → 违反时停止并通知 HR → answer_questions 阻断 + evaluate_harness safety 维度监控\n" +
+        "- 不得跳过任何审核节点 → 违反时标记异常并通知 HR → state_machine transition 硬校验 + health_check 合规维度",
       confidence: "medium",
     },
   },

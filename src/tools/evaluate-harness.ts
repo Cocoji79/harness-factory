@@ -483,6 +483,32 @@ function evaluateSafety(h: HarnessDocument): DimensionScore {
     }
   }
 
+  // Check: forbidden_actions 三件套完整性（Pattern from 破雾寻星）
+  if (
+    h.forbidden_actions &&
+    h.forbidden_actions.length > 0 &&
+    h.markdown_content
+  ) {
+    const md = h.markdown_content;
+    const hasConsequences =
+      md.includes("触发后果") || md.includes("违反") || md.includes("告警");
+    const hasImplementation =
+      md.includes("实现入口") ||
+      md.includes("代码校验") ||
+      md.includes("health_check");
+    if (!hasConsequences || !hasImplementation) {
+      findings.push({
+        dimension: dim,
+        severity: "warning",
+        criterion: "forbidden_actions 三件套完整性",
+        finding: `forbidden_actions 有底线声明，但缺少${!hasConsequences ? "触发后果" : ""}${!hasConsequences && !hasImplementation ? "和" : ""}${!hasImplementation ? "实现入口" : ""}`,
+        recommendation:
+          "每条 forbidden_action 必须是三件套：底线声明 + 触发后果（停止+告警+交人）+ 实现入口（代码校验+health_check监控）。只有声明没有牙齿的底线等于没有底线",
+      });
+      score -= 2;
+    }
+  }
+
   return {
     name: "安全性",
     score: Math.max(0, score),

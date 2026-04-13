@@ -80,7 +80,8 @@ function createFullHarness(): HarnessDocument {
     communication_checklist: [
       { item: "确认1", priority: "before_start", status: "confirmed" },
     ],
-    markdown_content: "# 测试",
+    markdown_content:
+      "# 测试\n\n## 禁止事项\n\n1. 不得替人决策\n   - 触发后果：停止动作并通知 HR\n   - 实现入口：answer_questions 阻断 + health_check 监控",
     state_machine: {
       states: [
         {
