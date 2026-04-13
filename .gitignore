@@ -3,3 +3,4 @@ dist/
 data/projects/
 !data/projects/.gitkeep
 *.tsbuildinfo
+.DS_Store
