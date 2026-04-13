@@ -125,12 +125,12 @@ export class Store {
     }
   }
 
-  // ── Capability Registry ──
+  // ── Generic JSON file helpers ──
 
-  async getCapabilities(): Promise<Capability[]> {
+  private async readJsonArray<T>(path: string): Promise<T[]> {
     try {
-      const data = await readFile(this.registryPath, "utf-8");
-      return JSON.parse(data) as Capability[];
+      const data = await readFile(path, "utf-8");
+      return JSON.parse(data) as T[];
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code === "ENOENT") {
         return [];
@@ -139,12 +139,18 @@ export class Store {
     }
   }
 
+  private async writeJsonArray<T>(path: string, items: T[]): Promise<void> {
+    await writeFile(path, JSON.stringify(items, null, 2), "utf-8");
+  }
+
+  // ── Capability Registry ──
+
+  async getCapabilities(): Promise<Capability[]> {
+    return this.readJsonArray<Capability>(this.registryPath);
+  }
+
   async saveCapabilities(capabilities: Capability[]): Promise<void> {
-    await writeFile(
-      this.registryPath,
-      JSON.stringify(capabilities, null, 2),
-      "utf-8",
-    );
+    await this.writeJsonArray(this.registryPath, capabilities);
   }
 
   async addCapability(capability: Capability): Promise<void> {
@@ -170,23 +176,11 @@ export class Store {
   // ── Pattern Library ──
 
   async getPatterns(): Promise<HarnessPattern[]> {
-    try {
-      const data = await readFile(this.patternsPath, "utf-8");
-      return JSON.parse(data) as HarnessPattern[];
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code === "ENOENT") {
-        return [];
-      }
-      throw error;
-    }
+    return this.readJsonArray<HarnessPattern>(this.patternsPath);
   }
 
   async savePatterns(patterns: HarnessPattern[]): Promise<void> {
-    await writeFile(
-      this.patternsPath,
-      JSON.stringify(patterns, null, 2),
-      "utf-8",
-    );
+    await this.writeJsonArray(this.patternsPath, patterns);
   }
 
   async addPattern(pattern: HarnessPattern): Promise<void> {

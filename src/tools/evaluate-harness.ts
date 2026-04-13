@@ -19,6 +19,8 @@ import type { HarnessDocument } from "../types.js";
  * 5. 自检能力 — 系统有内建 Evaluator 吗？Generator 和 Evaluator 分离了吗？
  */
 
+const DIMENSION_MAX = 20;
+
 // ── Types ──
 
 interface EvalFinding {
@@ -53,7 +55,7 @@ interface EvaluationResult {
 
 function evaluateCompleteness(h: HarnessDocument): DimensionScore {
   const findings: EvalFinding[] = [];
-  let score = 20;
+  let score = DIMENSION_MAX;
   const dim = "completeness" as const;
 
   const sm = h.state_machine;
@@ -64,7 +66,7 @@ function evaluateCompleteness(h: HarnessDocument): DimensionScore {
       criterion: "状态机存在",
       finding: "没有定义状态机，无法评估流程完整性",
     });
-    return { name: "流程完整性", score: 0, max: 20, findings };
+    return { name: "流程完整性", score: 0, max: DIMENSION_MAX, findings };
   }
 
   const stateNames = new Set(sm.states.map((s) => s.name));
@@ -186,14 +188,19 @@ function evaluateCompleteness(h: HarnessDocument): DimensionScore {
     });
   }
 
-  return { name: "流程完整性", score: Math.max(0, score), max: 20, findings };
+  return {
+    name: "流程完整性",
+    score: Math.max(0, score),
+    max: DIMENSION_MAX,
+    findings,
+  };
 }
 
 // ── Dimension 2: Executability (0-20) ──
 
 function evaluateExecutability(h: HarnessDocument): DimensionScore {
   const findings: EvalFinding[] = [];
-  let score = 20;
+  let score = DIMENSION_MAX;
   const dim = "executability" as const;
 
   const sm = h.state_machine;
@@ -336,14 +343,19 @@ function evaluateExecutability(h: HarnessDocument): DimensionScore {
     }
   }
 
-  return { name: "可执行性", score: Math.max(0, score), max: 20, findings };
+  return {
+    name: "可执行性",
+    score: Math.max(0, score),
+    max: DIMENSION_MAX,
+    findings,
+  };
 }
 
 // ── Dimension 3: Safety (0-20) ──
 
 function evaluateSafety(h: HarnessDocument): DimensionScore {
   const findings: EvalFinding[] = [];
-  let score = 20;
+  let score = DIMENSION_MAX;
   const dim = "safety" as const;
 
   // Check: forbidden_actions exist and are sufficient
@@ -466,14 +478,19 @@ function evaluateSafety(h: HarnessDocument): DimensionScore {
     }
   }
 
-  return { name: "安全性", score: Math.max(0, score), max: 20, findings };
+  return {
+    name: "安全性",
+    score: Math.max(0, score),
+    max: DIMENSION_MAX,
+    findings,
+  };
 }
 
 // ── Dimension 4: Evolvability (0-20) ──
 
 function evaluateEvolvability(h: HarnessDocument): DimensionScore {
   const findings: EvalFinding[] = [];
-  let score = 20;
+  let score = DIMENSION_MAX;
   const dim = "evolvability" as const;
 
   // Check: error_handling layers
@@ -614,14 +631,19 @@ function evaluateEvolvability(h: HarnessDocument): DimensionScore {
     }
   }
 
-  return { name: "可演化性", score: Math.max(0, score), max: 20, findings };
+  return {
+    name: "可演化性",
+    score: Math.max(0, score),
+    max: DIMENSION_MAX,
+    findings,
+  };
 }
 
 // ── Dimension 5: Self-Check Capability (0-20) ──
 
 function evaluateSelfCheck(h: HarnessDocument): DimensionScore {
   const findings: EvalFinding[] = [];
-  let score = 20;
+  let score = DIMENSION_MAX;
   const dim = "self_check" as const;
 
   const ev = h.builtin_evaluator;
@@ -638,7 +660,7 @@ function evaluateSelfCheck(h: HarnessDocument): DimensionScore {
         "定义 builtin_evaluator，包含至少 2 项独立质量检查，每项有硬性及格线。" +
         "Evaluator 必须在独立上下文中运行，防止 Generator 自我宽容",
     });
-    return { name: "自检能力", score: 0, max: 20, findings };
+    return { name: "自检能力", score: 0, max: DIMENSION_MAX, findings };
   }
 
   // Check: at least 2 checks defined
@@ -722,7 +744,12 @@ function evaluateSelfCheck(h: HarnessDocument): DimensionScore {
     score -= 2;
   }
 
-  return { name: "自检能力", score: Math.max(0, score), max: 20, findings };
+  return {
+    name: "自检能力",
+    score: Math.max(0, score),
+    max: DIMENSION_MAX,
+    findings,
+  };
 }
 
 // ── Main Evaluator ──

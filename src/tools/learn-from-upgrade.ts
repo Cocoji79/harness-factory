@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import type { Store } from "../store/store.js";
 import type { HarnessDocument, HarnessPattern } from "../types.js";
 
@@ -33,20 +34,46 @@ function computeDiff(
     label: string;
     getValue: (h: HarnessDocument) => unknown;
   }> = [
-    { field: "state_machine", label: "状态机", getValue: (h) => h.state_machine },
-    { field: "data_bindings", label: "数据绑定", getValue: (h) => h.data_bindings },
-    { field: "forbidden_actions", label: "禁止事项", getValue: (h) => h.forbidden_actions },
-    { field: "error_handling", label: "错误处理", getValue: (h) => h.error_handling },
+    {
+      field: "state_machine",
+      label: "状态机",
+      getValue: (h) => h.state_machine,
+    },
+    {
+      field: "data_bindings",
+      label: "数据绑定",
+      getValue: (h) => h.data_bindings,
+    },
+    {
+      field: "forbidden_actions",
+      label: "禁止事项",
+      getValue: (h) => h.forbidden_actions,
+    },
+    {
+      field: "error_handling",
+      label: "错误处理",
+      getValue: (h) => h.error_handling,
+    },
     { field: "templates", label: "结构化模板", getValue: (h) => h.templates },
-    { field: "skill_bindings", label: "Skill 绑定", getValue: (h) => h.skill_bindings },
-    { field: "automation_rules", label: "自动化规则", getValue: (h) => h.automation_rules },
+    {
+      field: "skill_bindings",
+      label: "Skill 绑定",
+      getValue: (h) => h.skill_bindings,
+    },
+    {
+      field: "automation_rules",
+      label: "自动化规则",
+      getValue: (h) => h.automation_rules,
+    },
   ];
 
   for (const { field, label, getValue } of newFields) {
     const beforeVal = getValue(before);
     const afterVal = getValue(after);
-    const beforeEmpty = !beforeVal || (Array.isArray(beforeVal) && beforeVal.length === 0);
-    const afterEmpty = !afterVal || (Array.isArray(afterVal) && afterVal.length === 0);
+    const beforeEmpty =
+      !beforeVal || (Array.isArray(beforeVal) && beforeVal.length === 0);
+    const afterEmpty =
+      !afterVal || (Array.isArray(afterVal) && afterVal.length === 0);
 
     if (beforeEmpty && !afterEmpty) {
       changes.push({
@@ -78,16 +105,39 @@ function computeDiff(
     beforeVal: unknown;
     afterVal: unknown;
   }> = [
-    { field: "principles", label: "设计原则", beforeVal: before.principles, afterVal: after.principles },
-    { field: "data_architecture", label: "数据架构", beforeVal: before.data_architecture, afterVal: after.data_architecture },
-    { field: "control_matrix", label: "控制权矩阵", beforeVal: before.control_matrix, afterVal: after.control_matrix },
-    { field: "scheduled_tasks", label: "定时任务", beforeVal: before.scheduled_tasks, afterVal: after.scheduled_tasks },
+    {
+      field: "principles",
+      label: "设计原则",
+      beforeVal: before.principles,
+      afterVal: after.principles,
+    },
+    {
+      field: "data_architecture",
+      label: "数据架构",
+      beforeVal: before.data_architecture,
+      afterVal: after.data_architecture,
+    },
+    {
+      field: "control_matrix",
+      label: "控制权矩阵",
+      beforeVal: before.control_matrix,
+      afterVal: after.control_matrix,
+    },
+    {
+      field: "scheduled_tasks",
+      label: "定时任务",
+      beforeVal: before.scheduled_tasks,
+      afterVal: after.scheduled_tasks,
+    },
   ];
 
   for (const { field, label, beforeVal, afterVal } of existingFields) {
     const beforeLen = Array.isArray(beforeVal) ? beforeVal.length : 0;
     const afterLen = Array.isArray(afterVal) ? afterVal.length : 0;
-    if (beforeLen !== afterLen || JSON.stringify(beforeVal) !== JSON.stringify(afterVal)) {
+    if (
+      beforeLen !== afterLen ||
+      JSON.stringify(beforeVal) !== JSON.stringify(afterVal)
+    ) {
       changes.push({
         field,
         label,
@@ -112,10 +162,16 @@ function summarizeValue(val: unknown): string {
   }
   if (typeof val === "object" && val !== null) {
     const keys = Object.keys(val);
-    if ("states" in val && Array.isArray((val as Record<string, unknown>).states)) {
+    if (
+      "states" in val &&
+      Array.isArray((val as Record<string, unknown>).states)
+    ) {
       return `${(val as Record<string, unknown[]>).states.length} 个状态`;
     }
-    if ("layers" in val && Array.isArray((val as Record<string, unknown>).layers)) {
+    if (
+      "layers" in val &&
+      Array.isArray((val as Record<string, unknown>).layers)
+    ) {
       return `${(val as Record<string, unknown[]>).layers.length} 层`;
     }
     if ("bitable_app_token" in val) {
@@ -207,8 +263,7 @@ export const LEARN_FROM_UPGRADE_SCHEMA = {
             after_summary: { type: "string" },
             extracted_rule: {
               type: "string",
-              description:
-                "提炼出的可复用规则。应是通用的，不限于当前项目",
+              description: "提炼出的可复用规则。应是通用的，不限于当前项目",
             },
             applicability: {
               type: "string",
@@ -239,7 +294,9 @@ export async function handleLearnFromUpgrade(
     project_id: string;
     upgraded_harness?: HarnessDocument;
     original_harness?: HarnessDocument;
-    patterns?: Array<Omit<HarnessPattern, "id" | "source_project" | "learned_at">>;
+    patterns?: Array<
+      Omit<HarnessPattern, "id" | "source_project" | "learned_at">
+    >;
   },
 ): Promise<string> {
   const project = await store.getProject(args.project_id);
@@ -253,15 +310,16 @@ export async function handleLearnFromUpgrade(
   // Phase 2: 收到 AI 提取的 patterns，存入 library
   if (args.patterns && args.patterns.length > 0) {
     const now = new Date().toISOString();
-    for (const p of args.patterns) {
-      const pattern: HarnessPattern = {
-        id: `pat_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
-        source_project: project.id,
-        learned_at: now,
-        ...p,
-      };
-      await store.addPattern(pattern);
-    }
+    const newPatterns: HarnessPattern[] = args.patterns.map((p) => ({
+      id: randomUUID().slice(0, 12),
+      source_project: project.id,
+      learned_at: now,
+      ...p,
+    }));
+
+    // Batch write: read once, append all, write once (fixes N+1)
+    const existing = await store.getPatterns();
+    await store.savePatterns([...existing, ...newPatterns]);
 
     // 如果有 upgraded_harness，标记 pattern_source
     if (args.upgraded_harness) {
@@ -276,14 +334,14 @@ export async function handleLearnFromUpgrade(
       await store.saveProject({ ...project, harness: updatedHarness });
     }
 
-    const allPatterns = await store.getPatterns();
+    const totalCount = existing.length + newPatterns.length;
 
     return JSON.stringify(
       {
         project_id: project.id,
         status: "patterns_saved",
-        saved_count: args.patterns.length,
-        total_patterns_in_library: allPatterns.length,
+        saved_count: newPatterns.length,
+        total_patterns_in_library: totalCount,
         saved_patterns: args.patterns.map((p) => ({
           name: p.name,
           category: p.category,
@@ -323,16 +381,14 @@ export async function handleLearnFromUpgrade(
         ],
         example_pattern: {
           name: "AI 系统必须有禁止事项清单",
-          description:
-            "v1 只定义了'应该做什么'，v2 补充了'绝对不能做什么'",
+          description: "v1 只定义了'应该做什么'，v2 补充了'绝对不能做什么'",
           category: "safety",
           pattern_type: "addition",
           before_summary: "无 forbidden_actions",
           after_summary: "5 条禁止事项",
           extracted_rule:
             "任何 AI 执行系统都应包含负向边界清单（forbidden_actions），至少 3 条。正向规则告诉 AI 做什么，负向规则告诉它不越界",
-          applicability:
-            "所有包含 AI 自动执行环节的业务流程 harness",
+          applicability: "所有包含 AI 自动执行环节的业务流程 harness",
         },
       },
     },

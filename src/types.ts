@@ -251,11 +251,18 @@ export interface BuiltinEvaluator {
   escalation: string;
 }
 
+export type EvalDimension =
+  | "completeness"
+  | "executability"
+  | "safety"
+  | "evolvability"
+  | "self_check";
+
 export interface EvaluatorCheck {
   /** 检查名称 */
   name: string;
   /** 属于哪个质量维度 */
-  dimension: string;
+  dimension: EvalDimension;
   /** 检查逻辑：Evaluator 要检查什么 */
   check_logic: string;
   /** 硬性及格线 */
